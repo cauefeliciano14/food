@@ -2,6 +2,7 @@
 
 App pessoal para controlar a comida de casa e parar de desperdiçar:
 
+- **Adicionar rápido** — no botão +: escreva ou dite "6 ovos, 1kg arroz e 2 litros de leite" e o app separa os itens, entende quantidades e sugere local e validade; "Comprar de novo" adiciona com um toque o que você mais usa; no código de barras, produto conhecido entra com um toque.
 - **Despensa** — tudo o que tem em casa, onde está (geladeira, freezer, despensa), quando comprou e quando vence. Ordena por validade e destaca o que está vencendo ou já venceu.
 - **Foto da nota fiscal** — tire foto do cupom do mercado e a IA (Claude) lê os produtos, traduz as abreviações ("PTO FGO SADIA KG" → "Peito de frango"), sugere onde guardar e estima a validade. Você confere, ajusta e adiciona tudo de uma vez.
 - **Livro de receitas** — vem com 23 receitas caseiras e você pode cadastrar as suas. O app cruza os ingredientes com sua despensa e mostra o que **dá pra fazer agora**, o que **falta pouco**, e prioriza receitas que **aproveitam itens perto de vencer**.

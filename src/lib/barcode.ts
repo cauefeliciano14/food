@@ -68,7 +68,7 @@ export async function lookupBarcode(code: string, fetchImpl: typeof fetch = fetc
           found: true,
           source: "openfoodfacts",
           prefill: {
-            barcode: code, name, category, location: defaultLocation(category), unit: "un", quantity: 1,
+            barcode: code, name, category, location: defaultLocation(category, baseName), unit: "un", quantity: 1,
             ...(p.quantity ? { notes: `Embalagem: ${String(p.quantity).trim()}` } : {}),
           },
         };

@@ -213,3 +213,38 @@ describe("meal plan", () => {
     expect(needs[0].recipes).toEqual(["Frango"]);
   });
 });
+
+import { parseQuickAdd } from "../quickAdd";
+
+describe("quick add parser", () => {
+  it.each([
+    ["6 ovos", { name: "Ovos", quantity: 6, unit: "un" }],
+    ["1kg arroz", { name: "Arroz", quantity: 1, unit: "kg" }],
+    ["arroz 5kg", { name: "Arroz", quantity: 5, unit: "kg" }],
+    ["2 litros de leite", { name: "Leite", quantity: 2, unit: "L" }],
+    ["500g de carne moída", { name: "Carne moída", quantity: 500, unit: "g" }],
+    ["meia dúzia de ovos", { name: "Ovos", quantity: 6, unit: "un" }],
+    ["uma dúzia de bananas", { name: "Bananas", quantity: 12, unit: "un" }],
+    ["três latas de atum", { name: "Atum", quantity: 3, unit: "lata" }],
+    ["pacote de café", { name: "Café", quantity: 1, unit: "pct" }],
+    ["Queijo mussarela", { name: "Queijo mussarela", quantity: 1, unit: "un" }],
+    ["1,5 kg de batata", { name: "Batata", quantity: 1.5, unit: "kg" }],
+  ])("%s", (text, expected) => {
+    expect(parseQuickAdd(text)).toEqual([expected]);
+  });
+  it("splits lists, including dictated ones", () => {
+    expect(parseQuickAdd("6 ovos, 1kg arroz e 2 litros de leite").map((i) => i.name)).toEqual(["Ovos", "Arroz", "Leite"]);
+    expect(parseQuickAdd("tomate\ncebola; alho").map((i) => i.name)).toEqual(["Tomate", "Cebola", "Alho"]);
+    expect(parseQuickAdd(" , ,")).toEqual([]);
+  });
+});
+
+import { defaultLocation } from "../shelfLife";
+describe("default location", () => {
+  it("keeps sealed shelf-stable items in the pantry", () => {
+    expect(defaultLocation("laticinios", "Leite condensado Moça")).toBe("despensa");
+    expect(defaultLocation("laticinios", "Creme de leite")).toBe("despensa");
+    expect(defaultLocation("laticinios", "Queijo prato")).toBe("geladeira");
+    expect(defaultLocation("carnes")).toBe("geladeira");
+  });
+});

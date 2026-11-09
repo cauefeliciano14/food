@@ -20,7 +20,7 @@ interface StoreDraft {
 
 function draftFor(s: ShoppingItem): StoreDraft {
   const category = guessCategory(s.name);
-  const location = defaultLocation(category);
+  const location = defaultLocation(category, s.name);
   const qty = Number((s.amount ?? "").replace(",", ".").match(/^\d+(\.\d+)?/)?.[0]) || 1;
   return {
     id: s.id!, name: s.name, quantity: qty, unit: "un", category, location,

@@ -213,3 +213,10 @@ ol.steps li { margin-bottom: 8px; }
 .meal-recipe { flex: 1; text-align: left; border: none; background: transparent; padding: 6px 0; cursor: pointer; font-weight: 600; min-width: 0; }
 .meal-add { margin-right: auto; color: var(--primary); }
 .scanner-frame.qr { left: 22%; right: 22%; top: 12%; bottom: 12%; }
+.item.quick { padding: 8px 10px; gap: 8px; }
+.item.quick .emoji { font-size: 1.3rem; width: 28px; }
+.toast { position: fixed; left: 16px; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom)); max-width: 688px; margin: 0 auto; z-index: 30;
+  background: var(--text); color: var(--bg); border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; box-shadow: var(--shadow); }
+.toast button { background: transparent; border: none; color: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.add-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.add-grid .btn { min-height: 64px; flex-direction: column; gap: 2px; border-radius: 16px; white-space: normal; text-align: center; }

@@ -97,7 +97,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
           continue;
         }
         const category = guessCategory(name);
-        const location = defaultLocation(category);
+        const location = defaultLocation(category, name);
         const days = suggestShelfLifeDays(name, category, location);
         merged.set(it.rawName, {
           include: looksLikeFood(name),

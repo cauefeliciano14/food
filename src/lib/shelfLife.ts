@@ -61,7 +61,11 @@ export function suggestShelfLifeDays(name: string, category: Category, location:
   return c[location] ?? c.default;
 }
 
-export function defaultLocation(category: Category): Location {
+/** Shelf-stable while sealed, even though their category usually goes in the fridge. */
+const PANTRY_WHILE_SEALED = new Set(["leitecondensado", "cremedeleite", "molhodetomate", "leitedecoco", "atum", "sardinha", "milho", "ervilha"]);
+
+export function defaultLocation(category: Category, name = ""): Location {
+  if (name && tokens(name).map(canonical).some((t) => PANTRY_WHILE_SEALED.has(t))) return "despensa";
   switch (category) {
     case "carnes":
     case "peixes":

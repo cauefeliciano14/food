@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FoodItem, Recipe } from "./lib/types";
 import { Home } from "./screens/Home";
 import { Pantry } from "./screens/Pantry";
@@ -15,6 +15,7 @@ import { RecipeForm } from "./components/RecipeForm";
 import { AISuggest } from "./components/AISuggest";
 import { BarcodeAdd } from "./components/BarcodeAdd";
 import { WasteReport } from "./components/WasteReport";
+import { BuyAgain, QuickAdd } from "./components/QuickAdd";
 import { notifyExpiringOncePerDay } from "./lib/notify";
 import { db } from "./lib/db";
 
@@ -36,6 +37,13 @@ export default function App() {
   const [pantryFilter, setPantryFilter] = useState<string | undefined>();
   const [modal, setModal] = useState<Modal>(null);
   const close = () => setModal(null);
+  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null);
+  const toastTimer = useRef<number | undefined>(undefined);
+  const showToast = (text: string, undo?: () => void) => {
+    window.clearTimeout(toastTimer.current);
+    setToast({ text, undo });
+    toastTimer.current = window.setTimeout(() => setToast(null), 4000);
+  };
   const shoppingCount = useLiveQuery(() => db.shopping.filter((s) => !s.done).count(), []) ?? 0;
 
   useEffect(() => {
@@ -78,9 +86,13 @@ export default function App() {
       {modal?.kind === "add-menu" && (
         <Sheet title="Adicionar comida" onClose={close}>
           <div className="stack">
-            <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "scan" })}>🧾 Nota fiscal (QR code ou foto)</button>
-            <button className="btn block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "barcode" })}>▮▯▮ Ler código de barras</button>
-            <button className="btn block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "add-manual" })}>✍️ Adicionar manualmente</button>
+            <QuickAdd onAdded={(n) => { close(); showToast(`✔ ${n} ${n === 1 ? "item adicionado" : "itens adicionados"} à despensa`); }} />
+            <div className="add-grid">
+              <button className="btn" onClick={() => setModal({ kind: "barcode" })}><span style={{ fontSize: "1.4rem" }}>▮▯▮</span>Código de barras</button>
+              <button className="btn" onClick={() => setModal({ kind: "scan" })}><span style={{ fontSize: "1.4rem" }}>🧾</span>Nota fiscal (QR)</button>
+            </div>
+            <BuyAgain onAdded={(name, undo) => showToast(`✔ ${name} adicionado`, undo)} />
+            <button className="btn ghost block" onClick={() => setModal({ kind: "add-manual" })}>Formulário completo (validade, preço…)</button>
           </div>
         </Sheet>
       )}
@@ -107,6 +119,12 @@ export default function App() {
         <Sheet title="Sugestão da IA" onClose={close}>
           <AISuggest onSaved={openRecipeById} onNeedKey={toSettings} />
         </Sheet>
+      )}
+      {toast && (
+        <div className="toast" role="status">
+          <span style={{ flex: 1 }}>{toast.text}</span>
+          {toast.undo && <button onClick={() => { toast.undo!(); setToast(null); }}>Desfazer</button>}
+        </div>
       )}
     </div>
   );

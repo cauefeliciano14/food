@@ -9,6 +9,13 @@
     <link rel="icon" href="./icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icon.svg" />
     <title>Despensa</title>
+    <script>
+      // Set the theme before first paint so there is no light flash in dark mode.
+      try {
+        var t = JSON.parse(localStorage.getItem("despensa:settings") || "{}").theme;
+        if (t === "claro" || t === "escuro") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

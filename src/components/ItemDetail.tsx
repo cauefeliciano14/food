@@ -3,11 +3,13 @@ import type { FoodItem } from "../lib/types";
 import { categoryInfo, locationInfo } from "../lib/types";
 import { formatBR } from "../lib/dates";
 import { consumeItem } from "../lib/db";
+import { addToShopping } from "../lib/shopping";
 import { ExpiryBadge, fmtQty } from "./ItemRow";
 import { ItemForm } from "./ItemForm";
 
 export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => void }) {
   const [editing, setEditing] = useState(false);
+  const [listed, setListed] = useState(false);
   const [amount, setAmount] = useState(String(item.unit === "un" || item.unit === "lata" ? 1 : item.quantity));
 
   if (editing) return <ItemForm item={item} onDone={onDone} />;
@@ -42,6 +44,9 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
         <button className="btn" onClick={() => act("consumido", true)}>Acabou tudo</button>
       </div>
       <button className="btn danger block" onClick={() => act("descartado", true)}>🗑️ Joguei fora (estragou)</button>
+      <button className="btn block" disabled={listed} onClick={async () => { await addToShopping(item.name); setListed(true); }}>
+        {listed ? "✔ Está na lista de compras" : "🛒 Pôr na lista de compras"}
+      </button>
       <button className="btn ghost block" onClick={() => setEditing(true)}>✏️ Editar</button>
     </div>
   );

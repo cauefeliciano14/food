@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { db, exportBackup, importBackup } from "../lib/db";
-import { loadSettings, saveSettings } from "../lib/settings";
+import { applyTheme, loadSettings, saveSettings, type Theme } from "../lib/settings";
 import { today } from "../lib/dates";
 
 export function Settings() {
@@ -41,6 +41,21 @@ export function Settings() {
     <>
       <header className="page-header"><h1>Ajustes</h1></header>
       <div className="page stack">
+        <div className="card stack">
+          <b>🎨 Aparência</b>
+          <div className="segmented" role="radiogroup" aria-label="Tema">
+            {([
+              ["auto", "📱 Automático"],
+              ["claro", "☀️ Claro"],
+              ["escuro", "🌙 Escuro"],
+            ] as [Theme, string][]).map(([v, label]) => (
+              <button key={v} role="radio" aria-checked={s.theme === v} className={s.theme === v ? "active" : ""}
+                onClick={() => { update({ theme: v }); applyTheme(v); }}>{label}</button>
+            ))}
+          </div>
+          <span className="small muted">Automático segue o modo claro/escuro do celular.</span>
+        </div>
+
         <div className="card stack">
           <b>🤖 Leitura de nota fiscal e sugestões com IA</b>
           <p className="small muted" style={{ margin: 0 }}>

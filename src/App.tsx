@@ -4,6 +4,8 @@ import { Home } from "./screens/Home";
 import { Pantry } from "./screens/Pantry";
 import { Recipes } from "./screens/Recipes";
 import { Settings } from "./screens/Settings";
+import { Shopping } from "./screens/Shopping";
+import { useLiveQuery } from "dexie-react-hooks";
 import { ScanReceipt } from "./screens/ScanReceipt";
 import { Sheet } from "./components/Sheet";
 import { ItemForm } from "./components/ItemForm";
@@ -14,7 +16,7 @@ import { AISuggest } from "./components/AISuggest";
 import { notifyExpiringOncePerDay } from "./lib/notify";
 import { db } from "./lib/db";
 
-type Tab = "inicio" | "despensa" | "receitas" | "ajustes";
+type Tab = "inicio" | "despensa" | "receitas" | "compras" | "ajustes";
 type Modal =
   | { kind: "add-menu" }
   | { kind: "add-manual" }
@@ -30,6 +32,7 @@ export default function App() {
   const [pantryFilter, setPantryFilter] = useState<string | undefined>();
   const [modal, setModal] = useState<Modal>(null);
   const close = () => setModal(null);
+  const shoppingCount = useLiveQuery(() => db.shopping.filter((s) => !s.done).count(), []) ?? 0;
 
   useEffect(() => {
     notifyExpiringOncePerDay().catch(() => {});
@@ -52,9 +55,10 @@ export default function App() {
 
   return (
     <div className="app">
-      {tab === "inicio" && <Home go={go} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
+      {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
       {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} />}
       {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} />}
+      {tab === "compras" && <Shopping />}
       {tab === "ajustes" && <Settings />}
 
       <nav className="tabbar">
@@ -63,7 +67,7 @@ export default function App() {
           <TabBtn icon="🗄️" label="Despensa" active={tab === "despensa"} onClick={() => { setPantryFilter(undefined); setTab("despensa"); }} />
           <button className="tab add" onClick={() => setModal({ kind: "add-menu" })} aria-label="Adicionar"><span className="ico">+</span>Adicionar</button>
           <TabBtn icon="📖" label="Receitas" active={tab === "receitas"} onClick={() => setTab("receitas")} />
-          <TabBtn icon="⚙️" label="Ajustes" active={tab === "ajustes"} onClick={() => setTab("ajustes")} />
+          <TabBtn icon="🛒" label="Compras" count={shoppingCount} active={tab === "compras"} onClick={() => setTab("compras")} />
         </div>
       </nav>
 
@@ -82,7 +86,11 @@ export default function App() {
         </Sheet>
       )}
       {modal?.kind === "item" && <Sheet title="Item" onClose={close}><ItemDetail item={modal.item} onDone={close} /></Sheet>}
-      {modal?.kind === "recipe" && <Sheet title={modal.recipe.title} onClose={close}><RecipeDetail recipe={modal.recipe} onDone={close} /></Sheet>}
+      {modal?.kind === "recipe" && (
+        <Sheet title={modal.recipe.title} onClose={close}>
+          <RecipeDetail recipe={modal.recipe} onDone={close} onOpenShopping={() => { close(); setTab("compras"); }} />
+        </Sheet>
+      )}
       {modal?.kind === "recipe-new" && (
         <Sheet title="Nova receita" onClose={close}>
           <RecipeForm onDone={(id) => (id ? openRecipeById(id) : close())} />
@@ -97,10 +105,11 @@ export default function App() {
   );
 }
 
-function TabBtn({ icon, label, active, onClick }: { icon: string; label: string; active: boolean; onClick: () => void }) {
+function TabBtn({ icon, label, active, onClick, count = 0 }: { icon: string; label: string; active: boolean; onClick: () => void; count?: number }) {
   return (
     <button className={`tab ${active ? "active" : ""}`} onClick={onClick}>
       <span className="ico">{icon}</span>
+      {count > 0 && <span className="count">{count}</span>}
       {label}
     </button>
   );

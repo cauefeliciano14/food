@@ -115,3 +115,36 @@ describe("shelf life + recipe text", () => {
     expect(textToIngredients(ingredientsToText(ings))).toEqual(ings);
   });
 });
+
+import { finishedSuggestions, guessCategory, sameProduct, shoppingListText } from "../shopping";
+
+describe("shopping list", () => {
+  it("dedupes the same product", () => {
+    expect(sameProduct("Cebola", "cebolas")).toBe(true);
+    expect(sameProduct("Peito de frango", "frango")).toBe(true);
+    expect(sameProduct("Leite", "Creme de leite")).toBe(false);
+  });
+  it("guesses categories", () => {
+    expect(guessCategory("Tomate italiano")).toBe("hortifruti");
+    expect(guessCategory("Peito de frango")).toBe("carnes");
+    expect(guessCategory("Creme de leite")).toBe("laticinios");
+    expect(guessCategory("Esponja")).toBe("outros");
+  });
+  it("suggests recently finished items not in pantry or list", () => {
+    const hist = [
+      { itemName: "Leite integral", category: "laticinios" as const, action: "consumido" as const, date: "2026-11-05" },
+      { itemName: "Ovos", category: "laticinios" as const, action: "consumido" as const, date: "2026-11-06" },
+      { itemName: "Arroz", category: "graos" as const, action: "consumido" as const, date: "2026-11-07" },
+      { itemName: "Pão", category: "padaria" as const, action: "consumido" as const, date: "2026-09-01" },
+    ];
+    const pantry = [item("Ovos brancos")];
+    const list = [{ id: 1, name: "arroz", done: false, source: "manual" as const, createdAt: 0 }];
+    expect(finishedSuggestions(hist, pantry, list, REF).map((s) => s.name)).toEqual(["Leite integral"]);
+  });
+  it("formats the shareable text with open items only", () => {
+    expect(shoppingListText([
+      { name: "Leite", amount: "2 L", done: false, source: "manual", createdAt: 0 },
+      { name: "Pão", done: true, source: "manual", createdAt: 0 },
+    ])).toBe("🛒 Lista de compras\n☐ Leite (2 L)");
+  });
+});

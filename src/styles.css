@@ -17,25 +17,44 @@
   --shadow: 0 1px 2px rgb(0 0 0 / 6%), 0 4px 16px rgb(0 0 0 / 5%);
   color-scheme: light;
 }
+/* Dark theme: follows the system in "auto", or forced via data-theme. */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #141815;
-    --surface: #1d221f;
-    --surface-2: #262c28;
+  :root:not([data-theme="claro"]) {
+    --bg: #121513;
+    --surface: #1b201d;
+    --surface-2: #252b27;
     --text: #e9ece8;
     --muted: #9aa39c;
-    --border: #2f3631;
+    --border: #2e3530;
     --primary: #5cbf85;
     --primary-ink: #0d1a12;
-    --primary-soft: #1f3528;
+    --primary-soft: #1d3326;
     --danger: #ef7a6c;
     --danger-soft: #3a211e;
     --warn: #f0b35a;
     --warn-soft: #3a2e1a;
     --info-soft: #1f2838;
-    --shadow: 0 1px 2px rgb(0 0 0 / 30%);
+    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
     color-scheme: dark;
   }
+}
+:root[data-theme="escuro"] {
+  --bg: #121513;
+  --surface: #1b201d;
+  --surface-2: #252b27;
+  --text: #e9ece8;
+  --muted: #9aa39c;
+  --border: #2e3530;
+  --primary: #5cbf85;
+  --primary-ink: #0d1a12;
+  --primary-soft: #1d3326;
+  --danger: #ef7a6c;
+  --danger-soft: #3a211e;
+  --warn: #f0b35a;
+  --warn-soft: #3a2e1a;
+  --info-soft: #1f2838;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%);
+  color-scheme: dark;
 }
 
 * { box-sizing: border-box; }
@@ -150,3 +169,13 @@ ol.steps li { margin-bottom: 8px; }
 .scan-row input[type="checkbox"] { width: 22px; height: 22px; margin-top: 10px; }
 .spinner { width: 36px; height: 36px; border: 4px solid var(--surface-2); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.9s linear infinite; margin: 0 auto; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
+.segmented button { border: none; background: transparent; border-radius: 9px; padding: 8px 4px; cursor: pointer; font-size: 0.9rem; min-height: 40px; }
+.segmented button.active { background: var(--surface); box-shadow: var(--shadow); font-weight: 600; }
+
+.item.shop input[type="checkbox"] { width: 24px; height: 24px; flex-shrink: 0; accent-color: var(--primary); }
+.item.shop.done .title { text-decoration: line-through; color: var(--muted); }
+.item.shop.done { opacity: 0.75; }
+.tab { position: relative; }
+.tab .count { position: absolute; top: 4px; left: 50%; margin-left: 6px; background: var(--danger); color: #fff; font-size: 0.65rem; font-weight: 700; border-radius: 99px; padding: 0 5px; min-width: 16px; line-height: 16px; }

@@ -6,7 +6,8 @@ import { rankRecipes } from "../lib/matching";
 import type { FoodItem, Recipe } from "../lib/types";
 import { ItemRow } from "../components/ItemRow";
 
-export function Home({ go, openItem, openRecipe }: {
+export function Home({ go, openItem, openRecipe, openSettings }: {
+  openSettings: () => void;
   go: (tab: "despensa" | "add" | "receitas", filter?: string) => void;
   openItem: (i: FoodItem) => void;
   openRecipe: (r: Recipe) => void;
@@ -36,6 +37,7 @@ export function Home({ go, openItem, openRecipe }: {
     <>
       <header className="page-header">
         <h1>🥕 Despensa</h1>
+        <button className="icon-btn" onClick={openSettings} aria-label="Ajustes">⚙️</button>
       </header>
       <div className="page">
         <div className="stats">

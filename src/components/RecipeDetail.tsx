@@ -1,18 +1,20 @@
 import { useMemo, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, consumeItem } from "../lib/db";
+import { addToShopping } from "../lib/shopping";
 import { matchRecipe } from "../lib/matching";
 import { today } from "../lib/dates";
 import type { FoodItem, Recipe } from "../lib/types";
 import { ExpiryBadge, fmtQty } from "./ItemRow";
 import { RecipeForm } from "./RecipeForm";
 
-export function RecipeDetail({ recipe: initial, onDone }: { recipe: Recipe; onDone: () => void }) {
+export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { recipe: Recipe; onDone: () => void; onOpenShopping: () => void }) {
   const recipe = useLiveQuery(() => db.recipes.get(initial.id!), [initial.id]) ?? initial;
   const items = useLiveQuery(() => db.items.toArray(), []) ?? [];
   const m = useMemo(() => matchRecipe(recipe, items, today()), [recipe, items]);
   const [mode, setMode] = useState<"view" | "edit" | "cook">("view");
   const [usedUp, setUsedUp] = useState<Set<number>>(new Set());
+  const [addedToList, setAddedToList] = useState(false);
 
   if (mode === "edit") return <RecipeForm recipe={recipe} onDone={() => setMode("view")} />;
 
@@ -71,7 +73,17 @@ export function RecipeDetail({ recipe: initial, onDone }: { recipe: Recipe; onDo
       </div>
 
       {m.missing.length > 0 && (
-        <div className="notice small">🛒 Para fazer, falta: <b>{m.missing.map((x) => x.name).join(", ")}</b></div>
+        <div className="notice small stack">
+          <div>🛒 Para fazer, falta: <b>{m.missing.map((x) => x.name).join(", ")}</b></div>
+          {addedToList ? (
+            <button className="btn sm block" onClick={onOpenShopping}>✔ Na lista — ver compras</button>
+          ) : (
+            <button className="btn sm block" onClick={async () => {
+              for (const x of m.missing) await addToShopping(x.name, { amount: x.amount, source: "receita", recipe: recipe.title });
+              setAddedToList(true);
+            }}>Adicionar o que falta à lista de compras</button>
+          )}
+        </div>
       )}
 
       <div className="card">

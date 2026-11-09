@@ -6,6 +6,8 @@ App pessoal para controlar a comida de casa e parar de desperdiçar:
 - **Foto da nota fiscal** — tire foto do cupom do mercado e a IA (Claude) lê os produtos, traduz as abreviações ("PTO FGO SADIA KG" → "Peito de frango"), sugere onde guardar e estima a validade. Você confere, ajusta e adiciona tudo de uma vez.
 - **Livro de receitas** — vem com 23 receitas caseiras e você pode cadastrar as suas. O app cruza os ingredientes com sua despensa e mostra o que **dá pra fazer agora**, o que **falta pouco**, e prioriza receitas que **aproveitam itens perto de vencer**.
 - **Sugestão com IA** — pede uma receita nova baseada no que você tem, e salva no livro se gostar.
+- **Lista de compras** — numa receita, "Adicionar o que falta à lista" põe os ingredientes que faltam (sem duplicar). Sugere de novo o que acabou recentemente, avisa se você já tem o item em casa, envia a lista pelo WhatsApp e, depois da compra, guarda o que foi marcado direto na despensa com validade sugerida.
+- **Modo escuro** — Ajustes → Aparência: Automático (segue o celular), Claro ou Escuro.
 - **"Cozinhei"** — ao fazer uma receita, marca o que acabou e o app tira da despensa.
 - **Avisos** — notificação diária (ao abrir o app) do que vence nos próximos dias, e um placar de quanto foi aproveitado × jogado fora.
 

@@ -48,6 +48,19 @@ export interface Recipe {
   createdAt: number;
 }
 
+export type ShoppingSource = "manual" | "receita" | "acabou";
+
+export interface ShoppingItem {
+  id?: number;
+  name: string;
+  amount?: string;
+  done: boolean;
+  source: ShoppingSource;
+  /** recipe titles that need this item */
+  recipes?: string[];
+  createdAt: number;
+}
+
 export type ConsumptionAction = "consumido" | "descartado";
 
 export interface HistoryEntry {

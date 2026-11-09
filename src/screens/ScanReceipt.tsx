@@ -15,6 +15,7 @@ interface Draft {
   location: Location;
   shelfLifeDays: number;
   expiryDate: string;
+  unitPrice: number;
 }
 
 type Stage = "pick" | "reading" | "review" | "done";
@@ -56,6 +57,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
             location: it.location,
             shelfLifeDays: days,
             expiryDate: addDays(date, days),
+            unitPrice: it.unitPrice > 0 ? +it.unitPrice.toFixed(2) : 0,
           };
         }),
       );
@@ -88,6 +90,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
         purchaseDate,
         expiryDate: d.expiryDate,
         notes: store ? `Comprado em ${store}` : undefined,
+        ...(d.unitPrice > 0 ? { unitPrice: d.unitPrice } : {}),
         createdAt: now,
       })),
     );
@@ -141,7 +144,9 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
               <input type="checkbox" checked={d.include} onChange={(e) => update(i, { include: e.target.checked })} aria-label="Incluir" />
               <div className="stack" style={{ minWidth: 0 }}>
                 <input type="text" value={d.name} onChange={(e) => update(i, { name: e.target.value })} />
-                <div className="small muted" style={{ marginTop: 2 }}>{d.rawName}</div>
+                <div className="small muted" style={{ marginTop: 2 }}>
+                  {d.rawName}{d.unitPrice > 0 && ` · R$ ${d.unitPrice.toFixed(2).replace(".", ",")}/${d.unit}`}
+                </div>
                 {d.include && (
                   <>
                     <div className="grid-3">

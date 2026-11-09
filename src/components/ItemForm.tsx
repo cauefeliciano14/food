@@ -1,20 +1,32 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Category, FoodItem, Location } from "../lib/types";
 import { CATEGORIES, LOCATIONS, UNITS } from "../lib/types";
 import { addDays, today } from "../lib/dates";
 import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { db } from "../lib/db";
 
-export function ItemForm({ item, onDone }: { item?: FoodItem; onDone: () => void }) {
-  const [name, setName] = useState(item?.name ?? "");
-  const [quantity, setQuantity] = useState(String(item?.quantity ?? 1));
-  const [unit, setUnit] = useState(item?.unit ?? "un");
-  const [category, setCategory] = useState<Category>(item?.category ?? "outros");
-  const [location, setLocation] = useState<Location>(item?.location ?? "despensa");
-  const [purchaseDate, setPurchaseDate] = useState(item?.purchaseDate ?? today());
-  const [expiryDate, setExpiryDate] = useState(item?.expiryDate ?? "");
+export function ItemForm({ item, initial, onDone, onNext }: {
+  item?: FoodItem;
+  /** prefill for a new item (e.g. from a barcode) */
+  initial?: Partial<FoodItem>;
+  onDone: () => void;
+  /** when given, shows "Adicionar e ler outro" */
+  onNext?: () => void;
+}) {
+  const base = item ?? initial;
+  const [name, setName] = useState(base?.name ?? "");
+  const [quantity, setQuantity] = useState(String(base?.quantity ?? 1));
+  const [unit, setUnit] = useState(base?.unit ?? "un");
+  const [category, setCategory] = useState<Category>(base?.category ?? "outros");
+  const [location, setLocation] = useState<Location>(base?.location ?? "despensa");
+  const [purchaseDate, setPurchaseDate] = useState(base?.purchaseDate ?? today());
+  const [expiryDate, setExpiryDate] = useState(
+    base?.expiryDate ?? (initial?.name ? addDays(today(), suggestShelfLifeDays(initial.name, initial.category ?? "outros", initial.location ?? "despensa")) : ""),
+  );
   const [expiryTouched, setExpiryTouched] = useState(!!item);
-  const [notes, setNotes] = useState(item?.notes ?? "");
+  const [notes, setNotes] = useState(base?.notes ?? "");
+  const [price, setPrice] = useState(base?.unitPrice ? String(base.unitPrice).replace(".", ",") : "");
+  const next = useRef(false);
 
   // While the user hasn't picked a date by hand, keep a suggested expiry in sync.
   function suggest(n = name, c = category, l = location, p = purchaseDate) {
@@ -33,11 +45,22 @@ export function ItemForm({ item, onDone }: { item?: FoodItem; onDone: () => void
       purchaseDate,
       expiryDate,
       notes: notes.trim() || undefined,
+      unitPrice: Number(price.replace(",", ".")) > 0 ? +Number(price.replace(",", ".")).toFixed(2) : undefined,
     };
     if (!data.name) return;
     if (item?.id != null) await db.items.update(item.id, data);
-    else await db.items.add({ ...data, createdAt: Date.now() });
-    onDone();
+    else {
+      await db.items.add({ ...data, ...(initial?.barcode ? { barcode: initial.barcode } : {}), createdAt: Date.now() });
+      // Remember what this barcode is, so the next scan is instant and offline.
+      if (initial?.barcode) {
+        await db.barcodes.put({
+          code: initial.barcode, name: data.name, category, location, unit,
+          ...(initial.notes?.startsWith("Embalagem: ") ? { size: initial.notes.slice(11) } : {}),
+        });
+      }
+    }
+    if (next.current && onNext) onNext();
+    else onDone();
   }
 
   async function remove() {
@@ -101,10 +124,17 @@ export function ItemForm({ item, onDone }: { item?: FoodItem; onDone: () => void
         </label>
       </div>
       <label className="field">
+        <span>Preço por {unit} (R$, opcional — para calcular o desperdício)</span>
+        <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex.: 22,90" />
+      </label>
+      <label className="field">
         <span>Observações</span>
         <input type="text" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Opcional" />
       </label>
-      <button className="btn primary block" type="submit">{item ? "Salvar" : "Adicionar"}</button>
+      <button className="btn primary block" type="submit" onClick={() => (next.current = false)}>{item ? "Salvar" : "Adicionar"}</button>
+      {onNext && !item && (
+        <button className="btn block" type="submit" onClick={() => (next.current = true)}>Adicionar e ler outro código</button>
+      )}
       {item && <button className="btn danger block" type="button" onClick={remove}>Excluir item</button>}
     </form>
   );

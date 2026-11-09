@@ -5,10 +5,25 @@ import { rankRecipes } from "../lib/matching";
 import { normalize } from "../lib/normalize";
 import { today } from "../lib/dates";
 import type { Recipe } from "../lib/types";
+import { Planner } from "../components/Planner";
 
 type Filter = "posso" | "quase" | "todas" | "favoritas" | "minhas";
 
-export function Recipes({ openRecipe, onNew, onAI }: { openRecipe: (r: Recipe) => void; onNew: () => void; onAI: () => void }) {
+const VIEW_KEY = "despensa:recipesView";
+function loadView(): "livro" | "semana" {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "semana" ? "semana" : "livro";
+  } catch {
+    return "livro";
+  }
+}
+
+export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe: (r: Recipe) => void; onNew: () => void; onAI: () => void; openShopping: () => void }) {
+  const [view, setViewState] = useState(loadView);
+  const setView = (v: "livro" | "semana") => {
+    setViewState(v);
+    try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ }
+  };
   const [filter, setFilter] = useState<Filter>("posso");
   const [q, setQ] = useState("");
   const recipes = useLiveQuery(() => db.recipes.toArray(), []) ?? [];
@@ -43,6 +58,11 @@ export function Recipes({ openRecipe, onNew, onAI }: { openRecipe: (r: Recipe) =
         </div>
       </header>
       <div className="page stack">
+        <div className="segmented" role="tablist">
+          <button role="tab" aria-selected={view === "livro"} className={view === "livro" ? "active" : ""} onClick={() => setView("livro")}>📖 Livro</button>
+          <button role="tab" aria-selected={view === "semana"} className={view === "semana" ? "active" : ""} onClick={() => setView("semana")}>📅 Semana</button>
+        </div>
+        {view === "semana" ? <Planner openRecipe={openRecipe} openShopping={openShopping} /> : <>
         <input type="search" placeholder="Buscar receita ou ingrediente…" value={q} onChange={(e) => setQ(e.target.value)} />
         <div className="chips">
           {([
@@ -81,6 +101,7 @@ export function Recipes({ openRecipe, onNew, onAI }: { openRecipe: (r: Recipe) =
             ))}
           </div>
         )}
+        </>}
       </div>
     </>
   );

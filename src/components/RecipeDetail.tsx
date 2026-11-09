@@ -4,7 +4,9 @@ import { db, consumeItem } from "../lib/db";
 import { addToShopping } from "../lib/shopping";
 import { matchRecipe } from "../lib/matching";
 import { today } from "../lib/dates";
-import type { FoodItem, Recipe } from "../lib/types";
+import { MEAL_SLOTS, type FoodItem, type MealSlot, type Recipe } from "../lib/types";
+import { addDays } from "../lib/dates";
+import { dayLabel } from "../lib/mealplan";
 import { ExpiryBadge, fmtQty } from "./ItemRow";
 import { RecipeForm } from "./RecipeForm";
 
@@ -15,6 +17,10 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
   const [mode, setMode] = useState<"view" | "edit" | "cook">("view");
   const [usedUp, setUsedUp] = useState<Set<number>>(new Set());
   const [addedToList, setAddedToList] = useState(false);
+  const [planning, setPlanning] = useState(false);
+  const [planDate, setPlanDate] = useState(today());
+  const [planSlot, setPlanSlot] = useState<MealSlot>("jantar");
+  const [planned, setPlanned] = useState("");
 
   if (mode === "edit") return <RecipeForm recipe={recipe} onDone={() => setMode("view")} />;
 
@@ -92,13 +98,40 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
       </div>
 
       {matchedItems.length > 0 && <button className="btn primary block" onClick={() => setMode("cook")}>👩‍🍳 Cozinhei esta receita</button>}
+      {planning ? (
+        <div className="card stack">
+          <b>📅 Planejar</b>
+          <div className="grid-2">
+            <select value={planDate} onChange={(e) => setPlanDate(e.target.value)} aria-label="Dia">
+              {Array.from({ length: 14 }, (_, i) => addDays(today(), i)).map((d, i) => (
+                <option key={d} value={d}>{i === 0 ? "Hoje" : i === 1 ? "Amanhã" : dayLabel(d)}</option>
+              ))}
+            </select>
+            <select value={planSlot} onChange={(e) => setPlanSlot(e.target.value as MealSlot)} aria-label="Refeição">
+              {MEAL_SLOTS.map((s) => <option key={s.value} value={s.value}>{s.icon} {s.label}</option>)}
+            </select>
+          </div>
+          <button className="btn primary" onClick={async () => {
+            const existing = await db.mealPlan.where("[date+slot]").equals([planDate, planSlot]).first();
+            if (existing) await db.mealPlan.update(existing.id!, { recipeId: recipe.id! });
+            else await db.mealPlan.add({ date: planDate, slot: planSlot, recipeId: recipe.id! });
+            setPlanned(`${MEAL_SLOTS.find((s) => s.value === planSlot)!.label} de ${dayLabel(planDate)}`);
+            setPlanning(false);
+          }}>Colocar no cardápio</button>
+        </div>
+      ) : (
+        <button className="btn block" onClick={() => setPlanning(true)}>{planned ? `✔ No cardápio: ${planned}` : "📅 Planejar para um dia"}</button>
+      )}
       <div className="grid-2">
         <button className="btn" onClick={() => db.recipes.update(recipe.id!, { favorite: !recipe.favorite })}>{recipe.favorite ? "★ Favorita" : "☆ Favoritar"}</button>
         <button className="btn" onClick={() => setMode("edit")}>✏️ Editar</button>
       </div>
       <button className="btn danger ghost block" onClick={async () => {
         if (!confirm(`Excluir a receita "${recipe.title}"?`)) return;
-        await db.recipes.delete(recipe.id!);
+        await db.transaction("rw", db.recipes, db.mealPlan, async () => {
+          await db.recipes.delete(recipe.id!);
+          await db.mealPlan.where("recipeId").equals(recipe.id!).delete();
+        });
         onDone();
       }}>Excluir receita</button>
     </div>

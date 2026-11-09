@@ -7,6 +7,9 @@ App pessoal para controlar a comida de casa e parar de desperdiçar:
 - **Livro de receitas** — vem com 23 receitas caseiras e você pode cadastrar as suas. O app cruza os ingredientes com sua despensa e mostra o que **dá pra fazer agora**, o que **falta pouco**, e prioriza receitas que **aproveitam itens perto de vencer**.
 - **Sugestão com IA** — pede uma receita nova baseada no que você tem, e salva no livro se gostar.
 - **Lista de compras** — numa receita, "Adicionar o que falta à lista" põe os ingredientes que faltam (sem duplicar). Sugere de novo o que acabou recentemente, avisa se você já tem o item em casa, envia a lista pelo WhatsApp e, depois da compra, guarda o que foi marcado direto na despensa com validade sugerida.
+- **Código de barras** — aponte a câmera para a embalagem; o app busca o produto no Open Food Facts (base gratuita) e preenche nome e categoria. Da segunda vez, ele lembra sozinho (funciona offline). "Adicionar e ler outro" agiliza guardar as compras.
+- **Cardápio da semana** — em Receitas → Semana, escolha almoço/jantar de cada dia ou toque em "Preencher vazios" (prioriza o que você já tem e o que vence antes). "Lista da semana" põe na lista de compras o que falta — conferindo a validade no dia de cada refeição.
+- **Desperdício** — na tela inicial, "ver desperdício": aproveitado × jogado fora nos últimos 6 meses, quanto custou (quando o item tem preço — vem da foto da nota) e o que mais estraga, com dicas.
 - **Modo escuro** — Ajustes → Aparência: Automático (segue o celular), Claro ou Escuro.
 - **"Cozinhei"** — ao fazer uma receita, marca o que acabou e o app tira da despensa.
 - **Avisos** — notificação diária (ao abrir o app) do que vence nos próximos dias, e um placar de quanto foi aproveitado × jogado fora.

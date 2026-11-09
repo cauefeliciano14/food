@@ -103,7 +103,8 @@ describe("shelf life + recipe text", () => {
     expect(suggestShelfLifeDays("Banana prata", "hortifruti", "despensa")).toBe(5);
     expect(suggestShelfLifeDays("Peito de frango", "carnes", "geladeira")).toBe(2);
     expect(suggestShelfLifeDays("Peito de frango", "carnes", "freezer")).toBe(120);
-    expect(suggestShelfLifeDays("Arroz", "graos", "despensa")).toBe(180);
+    expect(suggestShelfLifeDays("Arroz", "graos", "despensa")).toBe(365);
+    expect(suggestShelfLifeDays("Feijão carioca", "graos", "despensa")).toBe(365);
   });
   it("round-trips ingredient text", () => {
     const ings = textToIngredients("arroz - 2 xícaras\n? queijo ralado - a gosto\nsal");
@@ -146,5 +147,69 @@ describe("shopping list", () => {
       { name: "Leite", amount: "2 L", done: false, source: "manual", createdAt: 0 },
       { name: "Pão", done: true, source: "manual", createdAt: 0 },
     ])).toBe("🛒 Lista de compras\n☐ Leite (2 L)");
+  });
+});
+
+import { monthlyStats, topWasted, wastedByCategory } from "../waste";
+import type { HistoryEntry } from "../types";
+
+describe("waste report", () => {
+  const h = (itemName: string, action: "consumido" | "descartado", date: string, value?: number, category: HistoryEntry["category"] = "hortifruti"): HistoryEntry =>
+    ({ itemName, action, date, category, ...(value ? { value } : {}) });
+  const hist = [
+    h("Alface", "descartado", "2026-11-02", 4.5),
+    h("alface", "descartado", "2026-10-20", 4),
+    h("Pão", "descartado", "2026-11-03", 0, "padaria"),
+    h("Leite", "consumido", "2026-11-04"),
+    h("Ovos", "consumido", "2026-10-01"),
+    h("Ovos", "consumido", "2026-05-01"),
+  ];
+  it("groups by month, oldest first, across a year boundary label", () => {
+    const m = monthlyStats(hist, 6, REF);
+    expect(m.map((x) => x.key)).toEqual(["2026-06", "2026-07", "2026-08", "2026-09", "2026-10", "2026-11"]);
+    expect(m[5]).toMatchObject({ used: 1, wasted: 2, wastedValue: 4.5 });
+    expect(m[5].wasteRate).toBeCloseTo(2 / 3);
+    expect(m[0].wasteRate).toBeNull();
+    expect(monthlyStats([], 12, "2026-02-10")[0].label).toBe("mar/25");
+  });
+  it("ranks the most wasted items, merging case/accents", () => {
+    const top = topWasted(hist, 90, REF);
+    expect(top[0]).toMatchObject({ name: "Alface", count: 2, value: 8.5 });
+    expect(top.map((t) => t.name)).toEqual(["Alface", "Pão"]);
+    expect(wastedByCategory(hist, 90, REF)).toEqual([{ category: "hortifruti", count: 2 }, { category: "padaria", count: 1 }]);
+  });
+});
+
+import { autoFill, dayLabel, weekDays, weekShoppingNeeds, weekStart } from "../mealplan";
+
+describe("meal plan", () => {
+  it("computes the week (Mon–Sun)", () => {
+    expect(weekStart("2026-11-09")).toBe("2026-11-09"); // Monday
+    expect(weekStart("2026-11-15")).toBe("2026-11-09"); // Sunday
+    expect(weekDays("2026-11-09").at(-1)).toBe("2026-11-15");
+    expect(dayLabel("2026-11-12")).toBe("Qui 12/11");
+  });
+  const rs: Recipe[] = [
+    recipe({ id: 101, title: "Omelete", ingredients: [{ name: "ovo" }] }),
+    recipe({ id: 102, title: "Frango", ingredients: [{ name: "frango" }, { name: "limão" }] }),
+    recipe({ id: 103, title: "Brigadeiro", tags: ["doce"], ingredients: [{ name: "leite condensado" }] }),
+  ];
+  it("auto-fills empty future slots without repeats or desserts", () => {
+    const days = weekDays("2026-11-09");
+    const filled = autoFill(days, ["jantar"], [{ date: "2026-11-10", slot: "jantar", recipeId: 999 }], rs, [item("Ovos")], "2026-11-10");
+    expect(filled).toEqual([
+      { date: "2026-11-11", slot: "jantar", recipeId: 101 },
+      { date: "2026-11-12", slot: "jantar", recipeId: 102 },
+    ]);
+  });
+  it("lists what's missing, checking freshness on the meal's day", () => {
+    const pantry = [item("Ovos"), item("Peito de frango", "2026-11-11")];
+    const needs = weekShoppingNeeds(
+      [{ date: "2026-11-10", slot: "jantar", recipeId: 101 }, { date: "2026-11-14", slot: "jantar", recipeId: 102 }],
+      rs, pantry, REF,
+    );
+    // frango expires on the 11th, so for the 14th it must be bought
+    expect(needs.map((n) => n.name)).toEqual(["frango", "limão"]);
+    expect(needs[0].recipes).toEqual(["Frango"]);
   });
 });

@@ -26,6 +26,9 @@ export interface FoodItem {
   /** YYYY-MM-DD; empty string when unknown */
   expiryDate: string;
   notes?: string;
+  /** price paid per 1 `unit` (R$), when known — used to value waste */
+  unitPrice?: number;
+  barcode?: string;
   createdAt: number;
 }
 
@@ -69,6 +72,35 @@ export interface HistoryEntry {
   category: Category;
   action: ConsumptionAction;
   date: string;
+  quantity?: number;
+  unit?: string;
+  /** R$ value of the amount, when the item had a price */
+  value?: number;
+}
+
+export type MealSlot = "almoco" | "jantar";
+
+export interface MealPlanEntry {
+  id?: number;
+  /** YYYY-MM-DD */
+  date: string;
+  slot: MealSlot;
+  recipeId: number;
+}
+
+export const MEAL_SLOTS: { value: MealSlot; label: string; icon: string }[] = [
+  { value: "almoco", label: "Almoço", icon: "☀️" },
+  { value: "jantar", label: "Jantar", icon: "🌙" },
+];
+
+/** What we remember about a barcode after the first time it is scanned. */
+export interface BarcodeInfo {
+  code: string;
+  name: string;
+  category: Category;
+  location: Location;
+  unit: string;
+  size?: string;
 }
 
 export const LOCATIONS: { value: Location; label: string; icon: string }[] = [

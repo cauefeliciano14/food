@@ -6,8 +6,9 @@ import { rankRecipes } from "../lib/matching";
 import type { FoodItem, Recipe } from "../lib/types";
 import { ItemRow } from "../components/ItemRow";
 
-export function Home({ go, openItem, openRecipe, openSettings }: {
+export function Home({ go, openItem, openRecipe, openSettings, openWaste }: {
   openSettings: () => void;
+  openWaste: () => void;
   go: (tab: "despensa" | "add" | "receitas", filter?: string) => void;
   openItem: (i: FoodItem) => void;
   openRecipe: (r: Recipe) => void;
@@ -15,6 +16,11 @@ export function Home({ go, openItem, openRecipe, openSettings }: {
   const items = useLiveQuery(() => db.items.toArray(), []) ?? [];
   const recipes = useLiveQuery(() => db.recipes.toArray(), []) ?? [];
   const history = useLiveQuery(() => db.history.toArray(), []) ?? [];
+  const todayMeals = useLiveQuery(async () => {
+    const es = await db.mealPlan.where("date").equals(today()).toArray();
+    const rs = await Promise.all(es.map((e) => db.recipes.get(e.recipeId)));
+    return es.map((e, i) => ({ ...e, recipe: rs[i] })).filter((e) => e.recipe).sort((a, b) => a.slot.localeCompare(b.slot));
+  }, []) ?? [];
 
   const ref = today();
   const expired = items.filter((i) => expiryStatus(i.expiryDate, ref) === "vencido");
@@ -52,6 +58,20 @@ export function Home({ go, openItem, openRecipe, openSettings }: {
             <p>Sua despensa está vazia. Comece adicionando o que você tem em casa — ou tire foto da última nota do mercado.</p>
             <button className="btn primary" onClick={() => go("add")}>Adicionar comida</button>
           </div>
+        )}
+
+        {todayMeals.length > 0 && (
+          <>
+            <h2>📅 Hoje no cardápio</h2>
+            <div className="list">
+              {todayMeals.map((m) => (
+                <div key={m.id} className="item" onClick={() => openRecipe(m.recipe!)} style={{ cursor: "pointer" }}>
+                  <div className="emoji">{m.slot === "almoco" ? "☀️" : "🌙"}</div>
+                  <div className="body"><div className="title">{m.recipe!.title}</div><div className="small muted">{m.slot === "almoco" ? "Almoço" : "Jantar"}</div></div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {expired.length > 0 && (
@@ -94,8 +114,8 @@ export function Home({ go, openItem, openRecipe, openSettings }: {
         )}
 
         {recent.length > 0 && (
-          <div className="card" style={{ marginTop: 20 }}>
-            <b>Últimos 30 dias</b>
+          <div className="card" style={{ marginTop: 20, cursor: "pointer" }} onClick={openWaste} role="button">
+            <div className="row"><b>Últimos 30 dias</b><span className="spacer" /><span className="small muted">ver desperdício ›</span></div>
             <div className="small muted" style={{ marginTop: 4 }}>
               {used} item(ns) aproveitado(s) · {wasted} jogado(s) fora
             </div>

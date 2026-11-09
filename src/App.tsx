@@ -13,6 +13,8 @@ import { ItemDetail } from "./components/ItemDetail";
 import { RecipeDetail } from "./components/RecipeDetail";
 import { RecipeForm } from "./components/RecipeForm";
 import { AISuggest } from "./components/AISuggest";
+import { BarcodeAdd } from "./components/BarcodeAdd";
+import { WasteReport } from "./components/WasteReport";
 import { notifyExpiringOncePerDay } from "./lib/notify";
 import { db } from "./lib/db";
 
@@ -25,6 +27,8 @@ type Modal =
   | { kind: "recipe"; recipe: Recipe }
   | { kind: "recipe-new" }
   | { kind: "ai" }
+  | { kind: "barcode" }
+  | { kind: "waste" }
   | null;
 
 export default function App() {
@@ -55,9 +59,9 @@ export default function App() {
 
   return (
     <div className="app">
-      {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
+      {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openWaste={() => setModal({ kind: "waste" })} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
       {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} />}
-      {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} />}
+      {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} openShopping={() => setTab("compras")} />}
       {tab === "compras" && <Shopping />}
       {tab === "ajustes" && <Settings />}
 
@@ -75,6 +79,7 @@ export default function App() {
         <Sheet title="Adicionar comida" onClose={close}>
           <div className="stack">
             <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "scan" })}>📸 Foto da nota fiscal</button>
+            <button className="btn block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "barcode" })}>▮▯▮ Ler código de barras</button>
             <button className="btn block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "add-manual" })}>✍️ Adicionar manualmente</button>
           </div>
         </Sheet>
@@ -96,6 +101,8 @@ export default function App() {
           <RecipeForm onDone={(id) => (id ? openRecipeById(id) : close())} />
         </Sheet>
       )}
+      {modal?.kind === "barcode" && <Sheet title="Código de barras" onClose={close}><BarcodeAdd onDone={close} /></Sheet>}
+      {modal?.kind === "waste" && <Sheet title="Desperdício" onClose={close}><WasteReport /></Sheet>}
       {modal?.kind === "ai" && (
         <Sheet title="Sugestão da IA" onClose={close}>
           <AISuggest onSaved={openRecipeById} onNeedKey={toSettings} />

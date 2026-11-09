@@ -27,6 +27,7 @@ const ReceiptSchema = z.object({
       category: z.enum(categoryValues),
       location: z.enum(["geladeira", "freezer", "despensa"]),
       shelfLifeDays: z.number().describe("Estimativa de dias até vencer a partir da compra, considerando o local"),
+      unitPrice: z.number().describe("Preço pago por 1 unidade da `unit` escolhida (ex.: R$/kg para itens pesados), após descontos; 0 se ilegível"),
       isFood: z.boolean().describe("false para produtos de limpeza, higiene, utilidades etc."),
     }),
   ),
@@ -40,6 +41,7 @@ Extraia todos os produtos comprados.
 - Abreviações de cupom devem virar nomes legíveis (ex.: "PTO FGO SADIA KG" → "Peito de frango"; "LT INT PIRAC 1L" → "Leite integral").
 - Se a mesma linha tiver quantidade e unidade (ex.: "2 UN", "0,856 KG"), use-as. Para itens pesados use kg.
 - Agrupe linhas repetidas do mesmo produto somando a quantidade.
+- unitPrice é o preço por unidade da unit (ex.: 0,856 kg a R$ 22,90/kg → unitPrice 22.90; 2 un a R$ 4,50 cada → 4.50). Considere descontos da linha.
 - Estime shelfLifeDays de forma realista e conservadora para o local de armazenamento sugerido (carne fresca na geladeira ≈ 2–3 dias; congelados ≈ 90; grãos/enlatados ≈ 180–365).
 - Marque isFood=false para itens que não são comida nem bebida.
 - Não invente itens que não estão legíveis.`;

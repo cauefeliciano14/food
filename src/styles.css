@@ -212,3 +212,4 @@ ol.steps li { margin-bottom: 8px; }
 .meal-slot { width: 76px; flex-shrink: 0; }
 .meal-recipe { flex: 1; text-align: left; border: none; background: transparent; padding: 6px 0; cursor: pointer; font-weight: 600; min-width: 0; }
 .meal-add { margin-right: auto; color: var(--primary); }
+.scanner-frame.qr { left: 22%; right: 22%; top: 12%; bottom: 12%; }

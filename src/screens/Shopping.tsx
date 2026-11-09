@@ -6,6 +6,7 @@ import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { addDays, today } from "../lib/dates";
 import { CATEGORIES, LOCATIONS, UNITS, categoryInfo, type Category, type Location, type ShoppingItem } from "../lib/types";
 import { fmtQty } from "../components/ItemRow";
+import { shareText } from "../lib/native";
 
 interface StoreDraft {
   id: number;
@@ -52,16 +53,7 @@ export function Shopping() {
   }
 
   async function share() {
-    const body = shoppingListText(list);
-    try {
-      if (navigator.share) await navigator.share({ text: body });
-      else {
-        await navigator.clipboard.writeText(body);
-        flash("Lista copiada ✔");
-      }
-    } catch {
-      /* user cancelled */
-    }
+    if ((await shareText(shoppingListText(list))) === "copied") flash("Lista copiada ✔");
   }
 
   async function store() {

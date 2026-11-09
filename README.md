@@ -16,16 +16,29 @@ App pessoal para controlar a comida de casa e parar de desperdiçar:
 
 Os dados ficam **só no seu aparelho** (IndexedDB do navegador). Use Ajustes → Backup para exportar/importar.
 
-## Usar no celular
+## Instalar no Android (APK)
+
+Cada atualização no branch `main` gera um APK automaticamente (aba **Actions** → "APK Android") e publica em **Releases**.
+
+- Link fixo do APK mais recente: <https://github.com/cauefeliciano14/food/releases/latest/download/despensa.apk>
+- No celular: abra o link, baixe e toque no arquivo. Na primeira vez o Android pede para **permitir instalar apps desta fonte** (Chrome) — permita.
+- Atualizar: baixe o APK novo e instale por cima. Os dados continuam (o APK é sempre assinado com a mesma chave).
+
+> A chave que assina o APK fica nos segredos do repositório (**Settings → Secrets and variables → Actions**: `ANDROID_KEYSTORE_BASE64` e `ANDROID_KEYSTORE_PASSWORD`), nunca no código. Sem esses segredos o workflow ainda compila um APK de teste (artefato), mas não publica a release. Guarde uma cópia da chave: sem ela, atualizações exigem desinstalar o app.
+
+### Nota fiscal grátis (QR code)
+No app Android, **Nota fiscal → Ler QR code da nota** lê o QR do fim do cupom (NFC-e), busca a página da SEFAZ e importa todos os itens com quantidade e preço — sem IA e sem custo. Funciona com o layout nacional de consulta usado pela maioria dos estados. No navegador, a SEFAZ bloqueia a leitura (CORS), por isso só no app.
+
+## Usar no navegador (opcional)
 
 É um PWA: abra o site no celular e use **"Adicionar à tela inicial"** (Safari: compartilhar → Adicionar à Tela de Início; Chrome: menu ⋮ → Instalar app). Ele abre como um app e funciona offline (a leitura de nota precisa de internet).
 
 ### Publicar no GitHub Pages
 1. No GitHub: **Settings → Pages → Source: GitHub Actions**.
-2. Faça merge para `main` (ou rode o workflow *Deploy* manualmente). O endereço será `https://<seu-usuario>.github.io/food/`.
+2. Rode o workflow **Deploy (GitHub Pages)** na aba Actions. O endereço será `https://<seu-usuario>.github.io/food/`.
 
-### Chave da IA
-A leitura da nota e as sugestões usam a API da Anthropic. Crie uma chave em <https://console.anthropic.com/settings/keys> e cole em **Ajustes**. A chave fica salva só no aparelho e o app chama a API direto do navegador. Cada foto de nota custa poucos centavos.
+### Chave da IA (opcional)
+A foto da nota (para cupons sem QR code) e as sugestões de receita usam a API da Anthropic. Crie uma chave em <https://console.anthropic.com/settings/keys> e cole em **Ajustes**. A chave fica salva só no aparelho e o app chama a API direto do navegador. Cada foto de nota custa poucos centavos.
 
 > Como o app é só para você, a chave fica no navegador. Não publique uma versão com a chave embutida.
 
@@ -36,6 +49,7 @@ npm install
 npm run dev      # http://localhost:5173
 npm test         # testes da lógica (validade, matching de ingredientes)
 npm run build
+npx cap sync android   # copia o build para o projeto Android (android/)
 ```
 
 Stack: React + TypeScript + Vite, Dexie (IndexedDB), SDK da Anthropic (`claude-opus-5-5`, saída estruturada com Zod).

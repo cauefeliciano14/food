@@ -12,6 +12,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.6.0",
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/core": "^8.6.0",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/share": "^8.0.3",
     "@zxing/browser": "^0.2.1",
     "@zxing/library": "^0.23.0",
     "dexie": "^4.4.7",
@@ -21,10 +25,12 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.0",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
     "@vitejs/plugin-react": "^6.3.0",
     "fake-indexeddb": "^6.2.8",
+    "jsdom": "^31.0.0",
     "typescript": "^7.0.2",
     "vite": "^8.3.6",
     "vitest": "^5.1.0"

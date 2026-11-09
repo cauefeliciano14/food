@@ -1,0 +1,81 @@
+name: APK Android
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_APP_VERSION: 1.${{ github.run_number }}
+      - run: npx cap sync android
+
+      - name: Restore signing key from secrets
+        id: key
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/despensa-release.jks"
+            echo "file=$RUNNER_TEMP/despensa-release.jks" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::Sem o segredo ANDROID_KEYSTORE_BASE64: APK de teste (assinado com chave temporária, não será publicado)."
+          fi
+
+      - name: Build APK
+        working-directory: android
+        env:
+          APK_VERSION_CODE: ${{ github.run_number }}
+          APK_VERSION_NAME: 1.${{ github.run_number }}
+          ANDROID_KEYSTORE_FILE: ${{ steps.key.outputs.file }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../despensa.apk
+
+      - run: rm -f "$RUNNER_TEMP/despensa-release.jks"
+        if: always()
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: despensa-apk
+          path: despensa.apk
+
+      # Only builds from main become a downloadable release.
+      # Stable link: https://github.com/<owner>/<repo>/releases/latest/download/despensa.apk
+      - name: Publish release
+        if: github.ref == 'refs/heads/main' && steps.key.outputs.file != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: Despensa 1.${{ github.run_number }}
+          make_latest: true
+          files: despensa.apk
+          body: |
+            Baixe **despensa.apk** abaixo e abra no celular para instalar/atualizar.
+            Atualizações instalam por cima da versão anterior sem apagar seus dados.

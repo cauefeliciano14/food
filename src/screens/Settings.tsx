@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { db, exportBackup, importBackup } from "../lib/db";
 import { applyTheme, loadSettings, saveSettings, type Theme } from "../lib/settings";
 import { today } from "../lib/dates";
+import { isNative, saveTextFile } from "../lib/native";
 
 export function Settings() {
   const [s, setS] = useState(loadSettings());
@@ -16,13 +17,11 @@ export function Settings() {
   }
 
   async function doExport() {
-    const data = await exportBackup();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `despensa-backup-${today()}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
+    try {
+      await saveTextFile(`despensa-backup-${today()}.json`, JSON.stringify(await exportBackup(), null, 2));
+    } catch {
+      /* share sheet dismissed */
+    }
   }
 
   async function doImport(file?: File) {
@@ -57,9 +56,9 @@ export function Settings() {
         </div>
 
         <div className="card stack">
-          <b>🤖 Leitura de nota fiscal e sugestões com IA</b>
+          <b>🤖 IA (opcional, paga): foto da nota e sugestão de receitas</b>
           <p className="small muted" style={{ margin: 0 }}>
-            Usa o Claude (Anthropic). Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a> e cole aqui.
+            Não é necessária para o QR code da nota nem para o código de barras, que são grátis. Usa o Claude (Anthropic). Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a> e cole aqui.
             A chave fica salva apenas neste aparelho e é enviada só para a API da Anthropic. Cada leitura de nota custa alguns centavos.
           </p>
           <input type="password" autoComplete="off" placeholder="sk-ant-…" value={s.apiKey} onChange={(e) => update({ apiKey: e.target.value.trim() })} />
@@ -76,6 +75,7 @@ export function Settings() {
               {[1, 2, 3, 5, 7].map((d) => <option key={d} value={d}>{d} dia(s)</option>)}
             </select>
           </label>
+          {isNative() && <span className="small muted">No app Android, o aviso aparece na tela inicial ao abrir.</span>}
           {perm !== "granted" && typeof Notification !== "undefined" && (
             <button className="btn" onClick={async () => setPerm(await Notification.requestPermission())}>Permitir notificações</button>
           )}
@@ -101,7 +101,14 @@ export function Settings() {
             setMsg("Despensa esvaziada.");
           }}>Esvaziar despensa</button>
         </div>
-        <p className="small muted" style={{ textAlign: "center" }}>Despensa · feito pra mim 🧡</p>
+        {isNative() && (
+          <div className="card stack">
+            <b>📲 Atualizar o app</b>
+            <p className="small muted" style={{ margin: 0 }}>Baixe o APK mais novo e instale por cima — seus dados continuam.</p>
+            <a className="btn" href="https://github.com/cauefeliciano14/food/releases/latest" target="_blank" rel="noreferrer">Ver versão mais recente</a>
+          </div>
+        )}
+        <p className="small muted" style={{ textAlign: "center" }}>Despensa{import.meta.env.VITE_APP_VERSION ? ` ${import.meta.env.VITE_APP_VERSION}` : ""} · feito pra mim 🧡</p>
       </div>
     </>
   );

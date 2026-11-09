@@ -78,7 +78,7 @@ export default function App() {
       {modal?.kind === "add-menu" && (
         <Sheet title="Adicionar comida" onClose={close}>
           <div className="stack">
-            <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "scan" })}>📸 Foto da nota fiscal</button>
+            <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "scan" })}>🧾 Nota fiscal (QR code ou foto)</button>
             <button className="btn block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "barcode" })}>▮▯▮ Ler código de barras</button>
             <button className="btn block" style={{ minHeight: 56 }} onClick={() => setModal({ kind: "add-manual" })}>✍️ Adicionar manualmente</button>
           </div>

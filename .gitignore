@@ -2,3 +2,7 @@ node_modules
 dist
 *.tsbuildinfo
 .DS_Store
+
+# Signing keys never go in the repo (they live in GitHub Actions secrets)
+*.keystore
+*.jks

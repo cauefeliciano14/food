@@ -55,7 +55,7 @@ export function Home({ go, openItem, openRecipe, openSettings, openWaste }: {
         {items.length === 0 && (
           <div className="card empty" style={{ marginTop: 16 }}>
             <div className="big">🛒</div>
-            <p>Sua despensa está vazia. Comece adicionando o que você tem em casa — ou tire foto da última nota do mercado.</p>
+            <p>Sua despensa está vazia. Comece adicionando o que você tem em casa — ou leia o QR code da última nota do mercado.</p>
             <button className="btn primary" onClick={() => go("add")}>Adicionar comida</button>
           </div>
         )}

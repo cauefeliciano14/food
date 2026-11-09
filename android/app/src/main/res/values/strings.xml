@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Despensa</string>
+    <string name="title_activity_main">Despensa</string>
+    <string name="package_name">com.cauefeliciano.despensa</string>
+    <string name="custom_url_scheme">com.cauefeliciano.despensa</string>
+</resources>

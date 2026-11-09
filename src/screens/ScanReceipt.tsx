@@ -3,6 +3,10 @@ import { fileToJpegBase64 } from "../lib/image";
 import { addDays, today } from "../lib/dates";
 import { db } from "../lib/db";
 import { loadSettings } from "../lib/settings";
+import { fetchNfceHtml, isNfceUrl, looksLikeFood, mapUnit, parseNfceHtml, prettyName } from "../lib/nfce";
+import { guessCategory } from "../lib/shopping";
+import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
+import { BarcodeScanner } from "../components/BarcodeScanner";
 import { CATEGORIES, LOCATIONS, UNITS, type Category, type Location } from "../lib/types";
 
 interface Draft {
@@ -18,7 +22,7 @@ interface Draft {
   unitPrice: number;
 }
 
-type Stage = "pick" | "reading" | "review" | "done";
+type Stage = "pick" | "qr" | "reading" | "review" | "done";
 
 export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedKey: () => void }) {
   const [stage, setStage] = useState<Stage>("pick");
@@ -68,6 +72,54 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     }
   }
 
+  async function onQr(text: string) {
+    setError("");
+    if (!isNfceUrl(text)) {
+      setError("Esse QR code não parece ser de uma NFC-e. Procure o QR impresso no fim do cupom, perto de “Consulte pela chave de acesso”.");
+      setStage("pick");
+      return;
+    }
+    setPreview("");
+    setStage("reading");
+    try {
+      const data = parseNfceHtml(await fetchNfceHtml(text));
+      const date = data.purchaseDate || today();
+      setStore(data.store);
+      setPurchaseDate(date);
+      // Merge repeated lines of the same product.
+      const merged = new Map<string, Draft>();
+      for (const it of data.items) {
+        const name = prettyName(it.rawName);
+        const unit = mapUnit(it.unit);
+        const prev = merged.get(it.rawName);
+        if (prev) {
+          prev.quantity = +(prev.quantity + it.quantity).toFixed(3);
+          continue;
+        }
+        const category = guessCategory(name);
+        const location = defaultLocation(category);
+        const days = suggestShelfLifeDays(name, category, location);
+        merged.set(it.rawName, {
+          include: looksLikeFood(name),
+          rawName: it.rawName,
+          name,
+          quantity: it.quantity,
+          unit,
+          category,
+          location,
+          shelfLifeDays: days,
+          expiryDate: addDays(date, days),
+          unitPrice: it.unitPrice > 0 ? +it.unitPrice.toFixed(2) : 0,
+        });
+      }
+      setDrafts([...merged.values()]);
+      setStage("review");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setStage("pick");
+    }
+  }
+
   function update(i: number, patch: Partial<Draft>) {
     setDrafts((ds) => ds.map((d, j) => (j === i ? { ...d, ...patch } : d)));
   }
@@ -98,17 +150,6 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     setStage("done");
   }
 
-  if (!apiKey) {
-    return (
-      <div className="stack">
-        <div className="notice">
-          Para ler a nota fiscal pela foto o app usa a IA da Anthropic (Claude). Cadastre sua chave de API em <b>Ajustes</b> — ela fica salva só neste aparelho.
-        </div>
-        <button className="btn primary block" onClick={onNeedKey}>Ir para Ajustes</button>
-      </div>
-    );
-  }
-
   if (stage === "done") {
     return (
       <div className="empty">
@@ -124,7 +165,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
       <div className="stack" style={{ textAlign: "center" }}>
         {preview && <img src={preview} alt="Nota" style={{ maxHeight: 220, maxWidth: "100%", borderRadius: 12, objectFit: "contain" }} />}
         <div className="spinner" />
-        <p className="muted">Lendo a nota… isso pode levar alguns segundos.</p>
+        <p className="muted">{preview ? "Lendo a foto da nota… isso pode levar alguns segundos." : "Buscando a nota na SEFAZ…"}</p>
       </div>
     );
   }
@@ -172,9 +213,18 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
             </div>
           ))}
         </div>
-        <div className="small muted">As validades são estimativas — se a embalagem tiver data, ajuste aqui ou depois.</div>
+        <div className="small muted">As validades são estimativas — se a embalagem tiver data, ajuste aqui ou depois. Revise os nomes: o app abrevia como o cupom.</div>
         <button className="btn primary block" onClick={save} disabled={count === 0}>Adicionar {count} item(ns)</button>
-        <button className="btn ghost block" onClick={() => { setStage("pick"); setDrafts([]); }}>Tirar outra foto</button>
+        <button className="btn ghost block" onClick={() => { setStage("pick"); setDrafts([]); }}>Ler outra nota</button>
+      </div>
+    );
+  }
+
+  if (stage === "qr") {
+    return (
+      <div className="stack">
+        <BarcodeScanner mode="qr" onCode={onQr} />
+        <button className="btn ghost block" onClick={() => setStage("pick")}>Voltar</button>
       </div>
     );
   }
@@ -182,13 +232,28 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
   return (
     <div className="stack">
       {error && <div className="error">{error}</div>}
-      <p className="muted small">
-        Fotografe o cupom inteiro, de cima, com boa luz. Para notas muito compridas, tire mais de uma foto (uma por vez).
+      <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => { setError(""); setStage("qr"); }}>🔳 Ler QR code da nota — grátis</button>
+      <p className="muted small" style={{ margin: 0 }}>
+        O QR code no fim do cupom (NFC-e) leva à lista exata de produtos e preços na SEFAZ. Funciona no app Android.
       </p>
-      <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-      <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
-      <button className="btn primary block" onClick={() => cameraRef.current?.click()}>📷 Tirar foto da nota</button>
-      <button className="btn block" onClick={() => galleryRef.current?.click()}>🖼️ Escolher da galeria</button>
+      <hr style={{ border: "none", borderTop: "1px solid var(--border)", width: "100%" }} />
+      <b className="small">Nota sem QR code? Foto com IA</b>
+      {apiKey ? (
+        <>
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+          <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
+          <div className="grid-2">
+            <button className="btn" onClick={() => cameraRef.current?.click()}>📷 Tirar foto</button>
+            <button className="btn" onClick={() => galleryRef.current?.click()}>🖼️ Da galeria</button>
+          </div>
+          <p className="muted small" style={{ margin: 0 }}>Fotografe o cupom inteiro, de cima, com boa luz. Usa a API da Anthropic (custa centavos por foto).</p>
+        </>
+      ) : (
+        <p className="muted small" style={{ margin: 0 }}>
+          Opcional e pago (centavos por foto): exige uma chave da API da Anthropic em Ajustes.{" "}
+          <button className="btn ghost sm" onClick={onNeedKey} style={{ padding: 0, minHeight: 0, textDecoration: "underline" }}>Configurar</button>
+        </p>
+      )}
     </div>
   );
 }

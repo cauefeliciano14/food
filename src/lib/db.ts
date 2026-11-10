@@ -1,6 +1,8 @@
 import Dexie, { type EntityTable } from "dexie";
 import type { BarcodeInfo, FoodItem, Location, HistoryEntry, MealPlanEntry, Recipe, ShoppingItem } from "./types";
 import { SEED_RECIPES } from "./seedRecipes";
+import { SEED_RECIPES_2 } from "./seedRecipes2";
+import { normalize } from "./normalize";
 import { today } from "./dates";
 import { productPrefill } from "./barcode";
 
@@ -44,9 +46,17 @@ export class DespensaDB extends Dexie {
         }
       });
     });
+    // v5: more everyday recipes (salgados and doces) for people who already have the app.
+    this.version(5).stores({}).upgrade(async (tx) => {
+      const have = new Set((await tx.table("recipes").toArray()).map((r: Recipe) => normalize(r.title)));
+      const now = Date.now();
+      await tx.table("recipes").bulkAdd(
+        SEED_RECIPES_2.filter((r) => !have.has(normalize(r.title))).map((r) => ({ ...r, source: "padrao", createdAt: now })),
+      );
+    });
     this.on("populate", (tx) => {
       const now = Date.now();
-      tx.table("recipes").bulkAdd(SEED_RECIPES.map((r) => ({ ...r, source: "padrao", createdAt: now })));
+      tx.table("recipes").bulkAdd([...SEED_RECIPES, ...SEED_RECIPES_2].map((r) => ({ ...r, source: "padrao", createdAt: now })));
     });
   }
 }

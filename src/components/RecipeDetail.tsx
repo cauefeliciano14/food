@@ -1,4 +1,5 @@
 import { useMemo, useState, type CSSProperties } from "react";
+import { useBack } from "../lib/back";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, consumeItem } from "../lib/db";
 import { addToShopping } from "../lib/shopping";
@@ -25,6 +26,7 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
   const [planned, setPlanned] = useState("");
 
   const dish = dishStyle(recipe);
+  useBack(mode !== "view", () => setMode("view"));
   if (mode === "edit") return <RecipeForm recipe={recipe} onDone={() => setMode("view")} />;
 
   const matchedItems: FoodItem[] = [];

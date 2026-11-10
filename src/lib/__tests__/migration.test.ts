@@ -14,6 +14,10 @@ describe("upgrade of data saved by the previous version", () => {
       { name: "Arroz Saboroso Integral Tipo 1 Saboroso", quantity: 1, unit: "un", category: "bebidas", location: "despensa", purchaseDate: "2026-11-10", expiryDate: "2027-08-29", notes: "Embalagem: 5 kg", barcode: "7890000000001", createdAt: 1 },
       { name: "Arroz", quantity: 5, unit: "kg", category: "graos", location: "despensa", purchaseDate: "2026-11-10", expiryDate: "2027-11-10", createdAt: 2 },
     ]);
+    await old.table("recipes").bulkAdd([
+      { title: "Arroz branco soltinho", source: "padrao", ingredients: [], steps: [], tags: [], createdAt: 1 },
+      { title: "Bolo de cenoura com cobertura de chocolate", source: "minha", ingredients: [], steps: [], tags: [], createdAt: 1 },
+    ]);
     await old.table("barcodes").put({ code: "7890000000001", name: "Arroz Saboroso Integral Tipo 1 Saboroso", category: "bebidas", location: "despensa", unit: "un", size: "5 kg" });
     old.close();
 
@@ -23,6 +27,12 @@ describe("upgrade of data saved by the previous version", () => {
     expect(items[0].notes).toBeUndefined();
     expect(items[1]).toMatchObject({ name: "Arroz", quantity: 5, unit: "kg", category: "graos" });
     expect(items[1].fullName).toBeUndefined();
+    // v5: the new built-in recipes arrive, without duplicating what was there
+    const { SEED_RECIPES_2 } = await import("../seedRecipes2");
+    const recipes = await db.recipes.toArray();
+    expect(recipes.length).toBe(2 + SEED_RECIPES_2.length - 1);
+    expect(recipes.filter((r) => r.title.startsWith("Bolo de cenoura"))).toHaveLength(1);
+    expect(recipes.some((r) => r.title === "Coxinha de frango")).toBe(true);
     const { lookupBarcode } = await import("../barcode");
     const r = await lookupBarcode("7890000000001", (() => { throw new Error("no network in test"); }) as never);
     expect(r.prefill).toMatchObject({ name: "Arroz integral", category: "graos", quantity: 5, unit: "kg" });

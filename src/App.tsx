@@ -23,6 +23,7 @@ import { WasteReport } from "./components/WasteReport";
 import { BuyAgain, QuickAdd } from "./components/QuickAdd";
 import { notifyExpiringOncePerDay } from "./lib/notify";
 import { db } from "./lib/db";
+import { installBackButton, useBack } from "./lib/back";
 
 type Tab = "inicio" | "despensa" | "receitas" | "compras" | "ajustes";
 type Modal =
@@ -42,14 +43,25 @@ type Modal =
 export default function App() {
   const [tab, setTab] = useState<Tab>("inicio");
   const [pantryFilter, setPantryFilter] = useState<string | undefined>();
-  const [modal, setModal] = useState<Modal>(null);
+  const [modal, setModalState] = useState<Modal>(null);
+  // Earlier steps of the current flow (e.g. Adicionar → Código de barras), for "voltar".
+  const [trail, setTrail] = useState<Modal[]>([]);
+  /** open a sheet from scratch */
+  const setModal = (m: Modal) => { setTrail([]); setModalState(m); };
+  /** go one step deeper, remembering where we came from */
+  const push = (m: Modal) => { setTrail((t) => (modal ? [...t, modal] : t)); setModalState(m); };
+  const back = trail.length ? () => { setModalState(trail[trail.length - 1]); setTrail((t) => t.slice(0, -1)); } : undefined;
   const close = () => setModal(null);
   const showToast = useToast();
   const shoppingCount = useLiveQuery(() => db.shopping.filter((s) => !s.done).count(), []) ?? 0;
 
   useEffect(() => {
     notifyExpiringOncePerDay().catch(() => {});
+    installBackButton().catch(() => {});
   }, []);
+
+  // Back from another tab goes to Início first; only then the app goes to the background.
+  useBack(tab !== "inicio", () => setTab("inicio"), 0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -87,12 +99,12 @@ export default function App() {
       </nav>
 
       {modal?.kind === "add-menu" && (
-        <Sheet title="Adicionar comida" onClose={close}>
+        <Sheet title="Adicionar comida" onClose={close} onBack={back}>
           <div className="stack">
             <div className="tiles-3">
-              <button className="tile-btn" onClick={() => setModal({ kind: "barcode" })}><IconTile icon={ScanBarcode} hue={200} size={44} />Código de barras</button>
-              <button className="tile-btn" onClick={() => setModal({ kind: "scan" })}><IconTile icon={ReceiptText} hue={135} size={44} />Nota fiscal</button>
-              <button className="tile-btn" onClick={() => setModal({ kind: "add-manual" })}><IconTile icon={FilePenLine} hue={280} size={44} />Formulário</button>
+              <button className="tile-btn" onClick={() => push({ kind: "barcode" })}><IconTile icon={ScanBarcode} hue={200} size={44} />Código de barras</button>
+              <button className="tile-btn" onClick={() => push({ kind: "scan" })}><IconTile icon={ReceiptText} hue={135} size={44} />Nota fiscal</button>
+              <button className="tile-btn" onClick={() => push({ kind: "add-manual" })}><IconTile icon={FilePenLine} hue={280} size={44} />Formulário</button>
             </div>
             <div className="divider">ou escreva o que comprou</div>
             <QuickAdd onAdded={(n) => { close(); showToast(`${n} ${n === 1 ? "item adicionado" : "itens adicionados"} à despensa`); }} />
@@ -100,22 +112,22 @@ export default function App() {
           </div>
         </Sheet>
       )}
-      {modal?.kind === "add-manual" && <Sheet title="Novo item" onClose={close}><ItemForm onDone={close} /></Sheet>}
+      {modal?.kind === "add-manual" && <Sheet title="Novo item" onClose={close} onBack={back}><ItemForm onDone={close} /></Sheet>}
       {modal?.kind === "scan" && (
-        <Sheet title="Ler nota fiscal" onClose={close}>
+        <Sheet title="Ler nota fiscal" onClose={close} onBack={back}>
           <ScanReceipt onDone={() => { close(); setPantryFilter(undefined); setTab("despensa"); }} onNeedKey={toSettings} />
         </Sheet>
       )}
-      {modal?.kind === "item" && <Sheet title="Item" onClose={close}><ItemDetail item={modal.item} onDone={close} /></Sheet>}
+      {modal?.kind === "item" && <Sheet title="Item" onClose={close} onBack={back}><ItemDetail item={modal.item} onDone={close} /></Sheet>}
       {modal?.kind === "recipe" && (
-        <Sheet title={modal.recipe.title} onClose={close}>
+        <Sheet title={modal.recipe.title} onClose={close} onBack={back}>
           <RecipeDetail recipe={modal.recipe} onDone={close} onOpenShopping={() => { close(); setTab("compras"); }} />
         </Sheet>
       )}
       {modal?.kind === "recipe-new" && (
-        <Sheet title="Nova receita" onClose={close}>
+        <Sheet title="Nova receita" onClose={close} onBack={back}>
           <div className="stack">
-            <button className="item" onClick={() => setModal({ kind: "recipe-photo" })}>
+            <button className="item" onClick={() => push({ kind: "recipe-photo" })}>
               <IconTile icon={BookImage} hue={25} />
               <div className="body"><div className="title">Foto do livro de receitas</div><div className="meta">Tire foto da página e o app monta a receita</div></div>
               <ChevronRight size={18} className="muted" />
@@ -126,22 +138,22 @@ export default function App() {
         </Sheet>
       )}
       {modal?.kind === "recipe-photo" && (
-        <Sheet title="Receita por foto" onClose={close}>
-          <RecipeFromPhoto onDraft={(draft) => setModal({ kind: "recipe-draft", draft })} />
+        <Sheet title="Receita por foto" onClose={close} onBack={back}>
+          <RecipeFromPhoto onDraft={(draft) => push({ kind: "recipe-draft", draft })} />
         </Sheet>
       )}
       {modal?.kind === "recipe-draft" && (
-        <Sheet title="Confira a receita" onClose={close}>
+        <Sheet title="Confira a receita" onClose={close} onBack={back}>
           <div className="stack">
             <div className="notice small">Confira o que foi lido e corrija antes de salvar.</div>
             <RecipeForm initial={{ ...modal.draft, source: "minha" }} onDone={(id) => (id ? openRecipeById(id) : close())} />
           </div>
         </Sheet>
       )}
-      {modal?.kind === "barcode" && <Sheet title="Código de barras" onClose={close}><BarcodeAdd onDone={close} /></Sheet>}
-      {modal?.kind === "waste" && <Sheet title="Desperdício" onClose={close}><WasteReport /></Sheet>}
+      {modal?.kind === "barcode" && <Sheet title="Código de barras" onClose={close} onBack={back}><BarcodeAdd onDone={close} /></Sheet>}
+      {modal?.kind === "waste" && <Sheet title="Desperdício" onClose={close} onBack={back}><WasteReport /></Sheet>}
       {modal?.kind === "ai" && (
-        <Sheet title="Sugestão da IA" onClose={close}>
+        <Sheet title="Sugestão da IA" onClose={close} onBack={back}>
           <AISuggest onSaved={openRecipeById} onNeedKey={toSettings} />
         </Sheet>
       )}

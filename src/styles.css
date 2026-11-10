@@ -258,9 +258,10 @@ button.item, .item[role="button"] { cursor: pointer; text-align: left; width: 10
 }
 .sheet-backdrop.closing { animation: fade-out 0.18s ease-in both; }
 .sheet-backdrop.closing .sheet { animation: sheet-down 0.18s ease-in both; }
-.sheet-grip { width: 40px; height: 4px; border-radius: 99px; background: var(--border); margin: 0 auto 6px; }
+.sheet-drag { position: sticky; top: -8px; z-index: 3; background: var(--bg); margin: -8px -16px 0; padding: 8px 16px 0; touch-action: none; cursor: grab; }
+.sheet-grip { width: 44px; height: 5px; border-radius: 99px; background: var(--border); margin: 2px auto 8px; }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
-.sheet-head h2 { margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
+.sheet-head h2 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0; font-size: 1.2rem; font-weight: 800; letter-spacing: -0.01em; }
 
 /* add sheet */
 .tiles-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }

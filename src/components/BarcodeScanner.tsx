@@ -22,8 +22,11 @@ function NativeScanner({ onCode, mode = "produto" }: { onCode: (code: string) =>
     setError("");
     setBusy(true);
     try {
-      const code = await nativeScan(mode, setStatus);
-      const ok = mode === "qr" ? code.trim().length > 10 : isValidBarcode(code);
+      const valid = (c: string) => (mode === "qr" ? c.trim().length > 10 : isValidBarcode(c));
+      let code = await nativeScan(mode, setStatus);
+      // A stray read (another code in view) reopens the reader once instead of failing.
+      if (!valid(code)) code = await nativeScan(mode, setStatus);
+      const ok = valid(code);
       if (!ok) {
         setError(mode === "qr" ? "Isso não parece um QR code de nota." : `Código lido (${code}) não é de produto. Tente de novo.`);
         return;

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useBack } from "../lib/back";
 import type { FoodItem } from "../lib/types";
 import { categoryInfo, locationInfo } from "../lib/types";
 import { formatBR } from "../lib/dates";
@@ -16,8 +17,9 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
   const [opening, setOpening] = useState(false);
   const [listed, setListed] = useState(false);
   const [amount, setAmount] = useState(String(item.unit === "un" || item.unit === "lata" ? 1 : item.quantity));
+  useBack(editing || opening, () => { setEditing(false); setOpening(false); });
 
-  if (editing) return <ItemForm item={item} onDone={onDone} />;
+  if (editing) return <ItemForm item={item} onDone={onDone} onCancel={() => setEditing(false)} />;
   if (opening) return <OpenItem item={item} onDone={onDone} onCancel={() => setOpening(false)} />;
   const note = freshnessNote(item);
 

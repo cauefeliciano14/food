@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { useBack } from "../lib/back";
 import { BarcodeScanner } from "./BarcodeScanner";
 import { ItemForm } from "./ItemForm";
 import { lookupBarcode, type BarcodeLookup } from "../lib/barcode";
@@ -6,7 +7,7 @@ import { db } from "../lib/db";
 import { addDays, today } from "../lib/dates";
 import { suggestShelfLifeDays } from "../lib/shelfLife";
 import { LOCATIONS, UNITS, type FoodItem, type Location } from "../lib/types";
-import { Camera, CircleCheck, Minus, Plus } from "lucide-react";
+import { Camera, CircleCheck, Minus, Plus, ScanBarcode } from "lucide-react";
 import { canReadText, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
 import { productFromLabel } from "../lib/productOcr";
 import { LocationIcon } from "./icons";
@@ -20,6 +21,8 @@ export function BarcodeAdd({ onDone }: { onDone: () => void }) {
   const [result, setResult] = useState<BarcodeLookup | null>(null);
   const [added, setAdded] = useState<string[]>([]);
   const [round, setRound] = useState(0);
+  /** the full form was opened from the quick card ("Mais detalhes") — back returns there */
+  const [fromConfirm, setFromConfirm] = useState(false);
 
   const onCode = useCallback(async (code: string) => {
     setStage("lookup");
@@ -56,15 +59,27 @@ export function BarcodeAdd({ onDone }: { onDone: () => void }) {
     if (name) setAdded((a) => [...a, name]);
     setRound((r) => r + 1);
     setResult(null);
+    setFromConfirm(false);
     setStage("scan");
   };
+
+  // Android back: details → quick card → scanner (never straight out of the app).
+  const backOne = () => {
+    if (stage === "form" && fromConfirm) { setFromConfirm(false); setStage("confirm"); }
+    else next();
+  };
+  useBack(stage === "confirm" || stage === "form", backOne);
+
+  const rescan = (
+    <button className="btn ghost block" onClick={() => next()}><ScanBarcode size={18} />Ler outro código</button>
+  );
 
   if (stage === "photo") return <div className="stack" style={{ textAlign: "center" }}><div className="spinner" /><p className="muted">Lendo a embalagem…</p></div>;
   if (stage === "lookup") return <div className="stack" style={{ textAlign: "center" }}><div className="spinner" /><p className="muted">Procurando o produto…</p></div>;
 
   if (stage === "confirm" && result) {
     return <QuickConfirm key={round} prefill={result.prefill} fromMemory={result.source === "memoria"} fromPhoto={photoSource}
-      onAdded={(name, more) => (more ? next(name) : onDone())} onDetails={() => setStage("form")} />;
+      onAdded={(name, more) => (more ? next(name) : onDone())} onDetails={() => { setFromConfirm(true); setStage("form"); }} rescan={rescan} />;
   }
 
   if (stage === "form" && result) {
@@ -72,15 +87,20 @@ export function BarcodeAdd({ onDone }: { onDone: () => void }) {
       <div className="stack">
         {!result.found && (
           <div className="card stack">
-            <div className="small"><b>Código {result.prefill.barcode} não encontrado</b> na base de produtos. Da próxima vez o app vai lembrar dele.</div>
-            {canReadText() && (
-              <button className="btn primary block" onClick={() => fromPhoto(result.prefill.barcode)}><Camera size={18} />Tirar foto da embalagem</button>
-            )}
+            <div className="small"><b>Código {result.prefill.barcode} não encontrado</b> na base de produtos. Se o leitor pegou o código errado, leia de novo; se não, tire uma foto e o app passa a lembrar dele.</div>
+            <div className={canReadText() ? "grid-2" : "stack"}>
+              <button className="btn" onClick={() => next()}><ScanBarcode size={18} />Ler de novo</button>
+              {canReadText() && (
+                <button className="btn primary" onClick={() => fromPhoto(result.prefill.barcode)}><Camera size={18} />Foto da embalagem</button>
+              )}
+            </div>
             {photoError && <div className="error small">{photoError}</div>}
             <div className="divider">ou preencha à mão</div>
           </div>
         )}
-        <ItemForm key={round} initial={result.prefill} onDone={onDone} onNext={() => next()} />
+        <ItemForm key={round} initial={result.prefill} onDone={onDone} onNext={() => next()}
+          onCancel={fromConfirm ? backOne : undefined} />
+        {!fromConfirm && result.found && rescan}
       </div>
     );
   }
@@ -98,12 +118,13 @@ export function BarcodeAdd({ onDone }: { onDone: () => void }) {
   );
 }
 
-function QuickConfirm({ prefill, fromMemory, fromPhoto = false, onAdded, onDetails }: {
+function QuickConfirm({ prefill, fromMemory, fromPhoto = false, onAdded, onDetails, rescan }: {
   prefill: Partial<FoodItem>;
   fromMemory: boolean;
   fromPhoto?: boolean;
   onAdded: (name: string, scanMore: boolean) => void;
   onDetails: () => void;
+  rescan: React.ReactNode;
 }) {
   const category = prefill.category ?? "outros";
   const [name, setName] = useState(prefill.name ?? "");
@@ -164,6 +185,7 @@ function QuickConfirm({ prefill, fromMemory, fromPhoto = false, onAdded, onDetai
         <button className="btn" onClick={() => save(false)} disabled={!name.trim()}>Adicionar e fechar</button>
         <button className="btn ghost" onClick={onDetails}>Mais detalhes</button>
       </div>
+      {rescan}
     </div>
   );
 }

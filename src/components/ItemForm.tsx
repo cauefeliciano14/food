@@ -6,13 +6,15 @@ import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { db } from "../lib/db";
 import { ExpiryPhoto } from "./ExpiryPhoto";
 
-export function ItemForm({ item, initial, onDone, onNext }: {
+export function ItemForm({ item, initial, onDone, onNext, onCancel }: {
   item?: FoodItem;
   /** prefill for a new item (e.g. from a barcode) */
   initial?: Partial<FoodItem>;
   onDone: () => void;
   /** when given, shows "Adicionar e ler outro" */
   onNext?: () => void;
+  /** shows a "Voltar" button (e.g. back to the item, or to the quick card) */
+  onCancel?: () => void;
 }) {
   const base = item ?? initial;
   const [name, setName] = useState(base?.name ?? "");
@@ -149,6 +151,7 @@ export function ItemForm({ item, initial, onDone, onNext }: {
       {onNext && !item && (
         <button className="btn block" type="submit" onClick={() => (next.current = true)}>Adicionar e ler outro código</button>
       )}
+      {onCancel && <button className="btn ghost block" type="button" onClick={onCancel}>Voltar</button>}
       {item && <button className="btn danger block" type="button" onClick={remove}>Excluir item</button>}
     </form>
   );

@@ -31,7 +31,11 @@ export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe:
   const [q, setQ] = useState("");
   const recipes = useLiveQuery(() => db.recipes.toArray(), []) ?? [];
   const items = useLiveQuery(() => db.items.toArray(), []) ?? [];
-  const ranked = useMemo(() => rankRecipes(recipes, items, today()), [recipes, items]);
+  // Your own recipes (typed, from photos, from the AI) always come before the app's built-in ones.
+  const ranked = useMemo(
+    () => rankRecipes(recipes, items, today()).sort((a, b) => Number(a.recipe.source === "padrao") - Number(b.recipe.source === "padrao")),
+    [recipes, items],
+  );
 
   const nq = normalize(q);
   const shown = ranked.filter((m) => {

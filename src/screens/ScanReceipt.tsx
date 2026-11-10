@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useBack } from "../lib/back";
 import { fileToJpegBase64 } from "../lib/image";
 import { addDays, today } from "../lib/dates";
 import { db } from "../lib/db";
@@ -151,6 +152,8 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     setSaved(chosen.length);
     setStage("done");
   }
+
+  useBack(stage === "qr" || stage === "review", () => setStage("pick"));
 
   if (stage === "done") {
     return (

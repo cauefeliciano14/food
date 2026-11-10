@@ -19,7 +19,7 @@ Os dados ficam **só no seu aparelho** (IndexedDB do navegador). Use Ajustes →
 
 ## Instalar no Android (APK)
 
-Cada atualização no branch `main` gera um APK automaticamente (aba **Actions** → "APK Android") e publica em **Releases**.
+O APK só é gerado quando alguém pede: aba **Actions** → **APK Android** → **Run workflow** (branch `main`). O resultado é publicado em **Releases**.
 
 - Link fixo do APK mais recente: <https://github.com/cauefeliciano14/food/releases/latest/download/despensa.apk>
 - No celular: abra o link, baixe e toque no arquivo. Na primeira vez o Android pede para **permitir instalar apps desta fonte** (Chrome) — permita.

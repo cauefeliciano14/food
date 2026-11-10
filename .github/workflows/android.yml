@@ -1,8 +1,8 @@
 name: APK Android
 
+# Builds only on request: Actions tab → "APK Android" → Run workflow
+# (choose the main branch to publish a new release).
 on:
-  push:
-    branches: [main, "claude/**"]
   workflow_dispatch:
 
 permissions:

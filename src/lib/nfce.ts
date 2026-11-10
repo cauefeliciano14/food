@@ -1,4 +1,5 @@
 import { Capacitor, CapacitorHttp } from "@capacitor/core";
+import { netAllowed } from "./settings";
 import { normalize } from "./normalize";
 
 /**
@@ -21,6 +22,7 @@ export class NfceNeedsAppError extends Error {
 }
 
 export async function fetchNfceHtml(url: string): Promise<string> {
+  if (!netAllowed("sefaz")) throw new Error("A consulta da nota na SEFAZ está desligada em Ajustes → Internet.");
   if (Capacitor.isNativePlatform()) {
     const res = await CapacitorHttp.get({
       url,

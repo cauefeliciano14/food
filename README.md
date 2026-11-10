@@ -44,8 +44,10 @@ No app Android, **Nota fiscal → Ler QR code da nota** lê o QR do fim do cupom
 1. No GitHub: **Settings → Pages → Source: GitHub Actions**.
 2. Rode o workflow **Deploy (GitHub Pages)** na aba Actions. O endereço será `https://<seu-usuario>.github.io/food/`.
 
-### Chave da IA (opcional)
-A foto da nota (para cupons sem QR code) e as sugestões de receita usam a API da Anthropic. Crie uma chave em <https://console.anthropic.com/settings/keys> e cole em **Ajustes**. A chave fica salva só no aparelho e o app chama a API direto do navegador. Cada foto de nota custa poucos centavos.
+### IA e internet (Ajustes)
+- **IA (Claude, opcional e paga por uso):** ligue em **Ajustes → IA**, cole uma chave de <https://console.anthropic.com/settings/keys> e escolha um **limite de gasto por mês** (US$ 1 a 20). O app conta o gasto de cada uso (com folga) e para de chamar a IA ao chegar no limite. Cada função tem seu interruptor: foto do produto, foto da validade (só quando a leitura grátis falha), receita por foto, receita por link (só quando o site não tem formato padrão), nota sem QR code e sugestões de receita.
+- **Internet:** em **Ajustes → Internet** você liga/desliga a base de produtos (Open Food Facts), a consulta da nota na SEFAZ e os sites de receita. Tudo desligado, o app funciona offline.
+- **Receita por link:** cole o link (TudoGostoso, Panelinha, Nestlé…). A maioria dos sites publica a receita em formato padrão (schema.org) e o app lê de graça; os outros usam a IA, se ligada.
 
 > Como o app é só para você, a chave fica no navegador. Não publique uma versão com a chave embutida.
 

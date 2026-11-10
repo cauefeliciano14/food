@@ -1,4 +1,5 @@
 import { isNative } from "./native";
+import { fileToJpegBase64 } from "./image";
 
 /** On-device text reading (Google ML Kit): free, offline, Android app only. */
 export const canReadText = isNative;
@@ -39,6 +40,14 @@ export async function choosePhotos(limit = 6): Promise<string[]> {
     if (isCancel(e)) throw new PhotoCanceled();
     throw e;
   }
+}
+
+/** Load a photo taken in the app and shrink it for sending to the AI. */
+export async function photoToJpegBase64(uri: string, maxSide = 1600): Promise<string> {
+  const { Capacitor } = await import("@capacitor/core");
+  const res = await fetch(Capacitor.convertFileSrc(toFileUri(uri)));
+  const blob = await res.blob();
+  return fileToJpegBase64(new File([blob], "foto.jpg", { type: blob.type || "image/jpeg" }), maxSide);
 }
 
 export interface OcrLine {

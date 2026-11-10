@@ -1,3 +1,4 @@
+import { netAllowed } from "./settings";
 import { db } from "./db";
 import { guessCategory } from "./shopping";
 import { defaultLocation } from "./shelfLife";
@@ -71,7 +72,7 @@ export interface BarcodeLookup {
  */
 export async function lookupBarcode(code: string, fetchImpl: typeof fetch = fetch): Promise<BarcodeLookup> {
   const known = await db.barcodes.get(code);
-  if (known && known.v !== 2) {
+  if (known && known.v !== 2 && netAllowed("produtos")) {
     // remembered by an older version: refresh from the database (brands, size) when online
     const fresh = await fetchOff(code, fetchImpl);
     if (fresh) return { found: true, source: "memoria", prefill: { ...fresh, location: known.location } };
@@ -86,7 +87,7 @@ export async function lookupBarcode(code: string, fetchImpl: typeof fetch = fetc
         { ...productPrefill(known.name, [], known.size), location: known.location };
     return { found: true, source: "memoria", prefill: { barcode: code, ...base } };
   }
-  const off = await fetchOff(code, fetchImpl);
+  const off = netAllowed("produtos") ? await fetchOff(code, fetchImpl) : null;
   if (off) return { found: true, source: "openfoodfacts", prefill: off };
   return { found: false, source: "nenhum", prefill: { barcode: code, quantity: 1, unit: "un" } };
 }

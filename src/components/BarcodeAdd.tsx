@@ -8,7 +8,8 @@ import { addDays, today } from "../lib/dates";
 import { suggestShelfLifeDays } from "../lib/shelfLife";
 import { LOCATIONS, UNITS, type FoodItem, type Location } from "../lib/types";
 import { Camera, CircleCheck, Minus, Plus, ScanBarcode } from "lucide-react";
-import { canReadText, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
+import { canReadText, photoToJpegBase64, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
+import { aiAllowed } from "../lib/settings";
 import { productFromLabel } from "../lib/productOcr";
 import { LocationIcon } from "./icons";
 import { ExpiryPhoto } from "./ExpiryPhoto";
@@ -37,8 +38,18 @@ export function BarcodeAdd({ onDone }: { onDone: () => void }) {
     try {
       const uri = await takePhoto();
       setStage("photo");
-      const { lines } = await readText(uri);
-      const r = productFromLabel(lines);
+      let r: { prefill: Partial<FoodItem> } | null = null;
+      if (aiAllowed("produto")) {
+        // AI reads the package much better (stylized letters, brand vs product); free reader is the fallback.
+        try {
+          const { readProductPhoto } = await import("../lib/ai");
+          const p = await readProductPhoto(await photoToJpegBase64(uri));
+          if (p) r = { prefill: p };
+        } catch (e) {
+          setPhotoError(`${e instanceof Error ? e.message : String(e)} Usei a leitura do celular.`);
+        }
+      }
+      if (!r) r = productFromLabel((await readText(uri)).lines);
       if (!r) {
         setPhotoError("Não consegui ler o nome na foto. Fotografe a frente da embalagem, de perto e com boa luz — ou preencha à mão.");
         setStage(barcode ? "form" : "scan");

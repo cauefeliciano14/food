@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { BookImage, BookOpen, ChevronRight, FilePenLine, House, Package, Plus, ReceiptText, ScanBarcode, ShoppingCart, type LucideIcon } from "lucide-react";
+import { BookImage, BookOpen, ChevronRight, FilePenLine, Link2, House, Package, Plus, ReceiptText, ScanBarcode, ShoppingCart, type LucideIcon } from "lucide-react";
 import { useToast } from "./lib/toast";
 import { RecipeFromPhoto } from "./components/RecipeFromPhoto";
+import { RecipeFromLink } from "./components/RecipeFromLink";
 import type { RecipeDraft } from "./lib/recipeOcr";
 import { IconTile } from "./components/icons";
 import type { FoodItem, Recipe } from "./lib/types";
@@ -34,6 +35,7 @@ type Modal =
   | { kind: "recipe"; recipe: Recipe }
   | { kind: "recipe-new" }
   | { kind: "recipe-photo" }
+  | { kind: "recipe-link" }
   | { kind: "recipe-draft"; draft: RecipeDraft }
   | { kind: "ai" }
   | { kind: "barcode" }
@@ -132,6 +134,11 @@ export default function App() {
               <div className="body"><div className="title">Foto do livro de receitas</div><div className="meta">Tire foto da página e o app monta a receita</div></div>
               <ChevronRight size={18} className="muted" />
             </button>
+            <button className="item" onClick={() => push({ kind: "recipe-link" })}>
+              <IconTile icon={Link2} hue={210} />
+              <div className="body"><div className="title">Link de um site</div><div className="meta">TudoGostoso, Panelinha, Nestlé… cole o link</div></div>
+              <ChevronRight size={18} className="muted" />
+            </button>
             <div className="divider">ou escreva</div>
             <RecipeForm onDone={(id) => (id ? openRecipeById(id) : close())} />
           </div>
@@ -140,6 +147,11 @@ export default function App() {
       {modal?.kind === "recipe-photo" && (
         <Sheet title="Receita por foto" onClose={close} onBack={back}>
           <RecipeFromPhoto onDraft={(draft) => push({ kind: "recipe-draft", draft })} />
+        </Sheet>
+      )}
+      {modal?.kind === "recipe-link" && (
+        <Sheet title="Receita por link" onClose={close} onBack={back}>
+          <RecipeFromLink onDraft={(draft) => push({ kind: "recipe-draft", draft })} />
         </Sheet>
       )}
       {modal?.kind === "recipe-draft" && (

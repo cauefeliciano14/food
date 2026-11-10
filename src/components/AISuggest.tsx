@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { db } from "../lib/db";
 import type { GeneratedRecipe } from "../lib/ai";
-import { loadSettings } from "../lib/settings";
+import { aiAllowed } from "../lib/settings";
 import { today } from "../lib/dates";
 import { ingredientsToText } from "./RecipeForm";
 import { Sparkles } from "lucide-react";
@@ -12,12 +12,10 @@ export function AISuggest({ onSaved, onNeedKey }: { onSaved: (id: number) => voi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<GeneratedRecipe | null>(null);
-  const apiKey = loadSettings().apiKey;
-
-  if (!apiKey) {
+  if (!aiAllowed("sugestao")) {
     return (
       <div className="stack">
-        <div className="notice">Cadastre sua chave da API da Anthropic em Ajustes para receber sugestões de receitas com base no que você tem.</div>
+        <div className="notice">Ligue a IA (e “Sugestões de receita”) em Ajustes → IA para receber receitas criadas a partir do que você tem.</div>
         <button className="btn primary block" onClick={onNeedKey}>Ir para Ajustes</button>
       </div>
     );
@@ -32,7 +30,6 @@ export function AISuggest({ onSaved, onNeedKey }: { onSaved: (id: number) => voi
       const items = (await db.items.toArray()).filter((i) => isUsable(i, ref));
       const { suggestRecipe } = await import("../lib/ai");
       const r = await suggestRecipe(
-        apiKey,
         items.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit, location: i.location, expiresInDays: daysLeft(i, ref) })),
         wish.trim(),
       );

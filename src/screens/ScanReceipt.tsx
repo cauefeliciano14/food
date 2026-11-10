@@ -3,7 +3,7 @@ import { useBack } from "../lib/back";
 import { fileToJpegBase64 } from "../lib/image";
 import { addDays, today } from "../lib/dates";
 import { db } from "../lib/db";
-import { loadSettings } from "../lib/settings";
+import { aiAllowed } from "../lib/settings";
 import { fetchNfceHtml, isNfceUrl, looksLikeFood, mapUnit, parseNfceHtml, prettyName } from "../lib/nfce";
 import { guessCategory } from "../lib/shopping";
 import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
@@ -37,7 +37,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
   const [saved, setSaved] = useState(0);
   const cameraRef = useRef<HTMLInputElement>(null);
   const galleryRef = useRef<HTMLInputElement>(null);
-  const apiKey = loadSettings().apiKey;
+  const aiOn = aiAllowed("nota");
 
   async function onFile(file?: File) {
     if (!file) return;
@@ -47,7 +47,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     try {
       const b64 = await fileToJpegBase64(file);
       const { readReceipt } = await import("../lib/ai");
-      const res = await readReceipt(apiKey, b64);
+      const res = await readReceipt(b64);
       const date = /^\d{4}-\d{2}-\d{2}$/.test(res.purchaseDate) ? res.purchaseDate : today();
       setStore(res.store);
       setPurchaseDate(date);
@@ -243,7 +243,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
       </p>
       <hr style={{ border: "none", borderTop: "1px solid var(--border)", width: "100%" }} />
       <b className="small">Nota sem QR code? Foto com IA</b>
-      {apiKey ? (
+      {aiOn ? (
         <>
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} />
           <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
@@ -255,7 +255,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
         </>
       ) : (
         <p className="muted small" style={{ margin: 0 }}>
-          Opcional e pago (centavos por foto): exige uma chave da API da Anthropic em Ajustes.{" "}
+          Opcional e pago (centavos por foto): ligue a IA e a leitura de nota em Ajustes.{" "}
           <button className="btn ghost sm" onClick={onNeedKey} style={{ padding: 0, minHeight: 0, textDecoration: "underline" }}>Configurar</button>
         </p>
       )}

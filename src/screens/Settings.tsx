@@ -3,7 +3,8 @@ import { db, exportBackup, importBackup } from "../lib/db";
 import { applyTheme, loadSettings, saveSettings, type Theme } from "../lib/settings";
 import { today } from "../lib/dates";
 import { isNative, saveTextFile } from "../lib/native";
-import { Bell, Download, Palette, Save, Sparkles } from "lucide-react";
+import { Bell, Download, Palette, Save } from "lucide-react";
+import { AiSettings, NetSettings } from "../components/AiNetSettings";
 
 export function Settings() {
   const [s, setS] = useState(loadSettings());
@@ -56,14 +57,8 @@ export function Settings() {
           <span className="small muted">Automático segue o modo claro/escuro do celular.</span>
         </div>
 
-        <div className="card stack">
-          <b className="icon-label"><Sparkles size={18} />IA (opcional, paga)</b>
-          <p className="small muted" style={{ margin: 0 }}>
-            Não é necessária para o QR code da nota nem para o código de barras, que são grátis. Usa o Claude (Anthropic). Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a> e cole aqui.
-            A chave fica salva apenas neste aparelho e é enviada só para a API da Anthropic. Cada leitura de nota custa alguns centavos.
-          </p>
-          <input type="password" autoComplete="off" placeholder="sk-ant-…" value={s.apiKey} onChange={(e) => update({ apiKey: e.target.value.trim() })} />
-        </div>
+        <AiSettings s={s} update={update} />
+        <NetSettings s={s} update={update} />
 
         <div className="card stack">
           <b className="icon-label"><Bell size={18} />Avisos de validade</b>

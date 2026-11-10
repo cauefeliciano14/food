@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { CalendarClock } from "lucide-react";
-import { canReadText, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
+import { canReadText, photoToJpegBase64, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
+import { aiAllowed } from "../lib/settings";
 import { parseExpiryFromText } from "../lib/expiryOcr";
 import { formatBR } from "../lib/dates";
 
@@ -20,6 +21,17 @@ export function ExpiryPhoto({ onDate }: { onDate: (iso: string) => void }) {
       setMsg({ text: "Lendo a data…" });
       const { text } = await readText(uri);
       const r = parseExpiryFromText(text);
+      if (!r.best && aiAllowed("validade")) {
+        // Free reader didn't find it: ask the AI (counts toward the monthly cap).
+        setMsg({ text: "Pedindo ajuda à IA…" });
+        const { readExpiryPhoto } = await import("../lib/ai");
+        const d = await readExpiryPhoto(await photoToJpegBase64(uri, 1200));
+        if (d) {
+          onDate(d);
+          setMsg({ text: `Validade lida pela IA: ${formatBR(d)}` });
+          return;
+        }
+      }
       if (!r.best) {
         setMsg({ text: "Não encontrei a data na foto. Chegue mais perto, com boa luz, só no trecho da validade.", error: true });
         return;

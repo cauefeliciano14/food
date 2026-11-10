@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { BookImage, Camera, ClipboardPaste, Copy, Images, ScanText, Send, X } from "lucide-react";
-import { canReadText, choosePhotos, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
+import { BookImage, Camera, ClipboardPaste, Copy, Images, ScanText, Send, Sparkles, X } from "lucide-react";
+import { canReadText, choosePhotos, photoToJpegBase64, PhotoCanceled, readText, takePhoto } from "../lib/ocr";
+import { aiAllowed } from "../lib/settings";
 import { CLAUDE_RECIPE_PROMPT, orderLines, parseClaudeReply, parseRecipeText, type RecipeDraft } from "../lib/recipeOcr";
 import { isNative, shareText } from "../lib/native";
 import { IconTile } from "./icons";
@@ -16,7 +17,8 @@ export function RecipeFromPhoto({ onDraft }: { onDraft: (d: RecipeDraft) => void
   const [pages, setPages] = useState<string[]>([]);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
-  const [mode, setMode] = useState<"pages" | "claude">(canReadText() ? "pages" : "claude");
+  const aiOn = aiAllowed("receita") && isNative();
+  const [mode, setMode] = useState<"ia" | "pages" | "claude">(aiOn ? "ia" : canReadText() ? "pages" : "claude");
   const [reply, setReply] = useState("");
   const [copied, setCopied] = useState(false);
 
@@ -45,6 +47,22 @@ export function RecipeFromPhoto({ onDraft }: { onDraft: (d: RecipeDraft) => void
         return;
       }
       onDraft(draft);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy("");
+    }
+  }
+
+  async function readWithAI() {
+    setError("");
+    try {
+      setBusy("Preparando as fotos…");
+      const imgs: string[] = [];
+      for (const p of pages) imgs.push(await photoToJpegBase64(p));
+      setBusy("A IA está lendo a receita…");
+      const { readRecipePhotos } = await import("../lib/ai");
+      onDraft(await readRecipePhotos(imgs));
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -90,12 +108,13 @@ export function RecipeFromPhoto({ onDraft }: { onDraft: (d: RecipeDraft) => void
     <div className="stack">
       {canReadText() && (
         <div className="segmented" role="tablist">
-          <button role="tab" aria-selected={mode === "pages"} className={mode === "pages" ? "active" : ""} onClick={() => setMode("pages")}><ScanText size={16} />Ler no celular</button>
-          <button role="tab" aria-selected={mode === "claude"} className={mode === "claude" ? "active" : ""} onClick={() => setMode("claude")}><Send size={16} />Pelo meu Claude</button>
+          {aiOn && <button role="tab" aria-selected={mode === "ia"} className={mode === "ia" ? "active" : ""} onClick={() => setMode("ia")}><Sparkles size={16} />Com IA</button>}
+          <button role="tab" aria-selected={mode === "pages"} className={mode === "pages" ? "active" : ""} onClick={() => setMode("pages")}><ScanText size={16} />{aiOn ? "Grátis" : "Ler no celular"}</button>
+          <button role="tab" aria-selected={mode === "claude"} className={mode === "claude" ? "active" : ""} onClick={() => setMode("claude")}><Send size={16} />{aiOn ? "Meu Claude" : "Pelo meu Claude"}</button>
         </div>
       )}
 
-      {(mode === "pages" || isNative()) && (
+      {(mode !== "claude" || isNative()) && (
         <>
           <p className="small muted" style={{ margin: 0 }}>
             Fotografe a página da receita, reta e com boa luz. Se a receita continua em outra página, adicione mais fotos na ordem.
@@ -117,6 +136,16 @@ export function RecipeFromPhoto({ onDraft }: { onDraft: (d: RecipeDraft) => void
               <button className="btn" onClick={() => add(true)} disabled={!!busy}><Images size={18} />Da galeria</button>
             </div>
           )}
+        </>
+      )}
+
+      {mode === "ia" && (
+        <>
+          <button className="btn primary block" onClick={readWithAI} disabled={!pages.length || !!busy}>
+            <Sparkles size={18} />{busy || "Montar receita com IA"}
+          </button>
+          {busy && <div className="spinner" />}
+          <p className="small muted" style={{ margin: 0 }}>Entende letra cursiva, colunas e fotos tortas. Conta no limite mensal de IA.</p>
         </>
       )}
 

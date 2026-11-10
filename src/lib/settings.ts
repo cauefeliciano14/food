@@ -33,7 +33,7 @@ export interface Settings {
 
 const DEFAULTS: Settings = {
   apiKey: "", notifyDays: 3, theme: "auto",
-  aiEnabled: false, aiMonthlyLimit: 2,
+  aiEnabled: false, aiMonthlyLimit: 3,
   ai: { produto: true, validade: true, receita: true, link: true, nota: true, sugestao: true },
   net: { produtos: true, sefaz: true, links: true },
 };

@@ -29,7 +29,7 @@ const NET_USES: [keyof NetUses, string, string][] = [
   ["links", "Sites de receita", "Só a página do link que você colar — grátis"],
 ];
 
-const LIMITS = [1, 2, 5, 10, 20];
+const LIMITS = [1, 2, 3, 5, 10, 20];
 
 const usd = (n: number) => `US$ ${n.toFixed(2).replace(".", ",")}`;
 

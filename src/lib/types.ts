@@ -26,6 +26,8 @@ export interface FoodItem {
   /** YYYY-MM-DD; empty string when unknown */
   expiryDate: string;
   notes?: string;
+  /** original product name as read from the barcode database (name is the short one) */
+  fullName?: string;
   /** YYYY-MM-DD when the package was opened (validity then follows freshness rules) */
   openedAt?: string;
   /** price paid per 1 `unit` (R$), when known — used to value waste */
@@ -103,6 +105,10 @@ export interface BarcodeInfo {
   location: Location;
   unit: string;
   size?: string;
+  fullName?: string;
+  quantity?: number;
+  /** 2 = name/category/quantity already simplified */
+  v?: number;
 }
 
 export const LOCATIONS: { value: Location; label: string }[] = [

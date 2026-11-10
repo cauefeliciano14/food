@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from "dexie";
 import type { BarcodeInfo, FoodItem, Location, HistoryEntry, MealPlanEntry, Recipe, ShoppingItem } from "./types";
 import { SEED_RECIPES } from "./seedRecipes";
 import { today } from "./dates";
+import { productPrefill } from "./barcode";
 
 export class DespensaDB extends Dexie {
   items!: EntityTable<FoodItem, "id">;
@@ -25,6 +26,23 @@ export class DespensaDB extends Dexie {
       items: "++id, name, category, location, expiryDate, purchaseDate, barcode",
       mealPlan: "++id, date, recipeId, [date+slot]",
       barcodes: "&code",
+    });
+    // v4: barcode-scanned items get a short name (original kept), category
+    // decided by the name and the package size as quantity.
+    this.version(4).stores({}).upgrade(async (tx) => {
+      // (remembered barcodes are refreshed on their next scan — see lookupBarcode)
+      await tx.table("items").toCollection().modify((it: FoodItem) => {
+        if (!it.barcode || it.fullName) return;
+        const size = it.notes?.startsWith("Embalagem: ") ? it.notes.slice(11) : undefined;
+        const p = productPrefill(it.name, [], size);
+        if (p.name !== it.name) { it.fullName = it.name; it.name = p.name; }
+        if (p.category !== "outros") it.category = p.category;
+        if (it.quantity === 1 && it.unit === "un" && !p.notes && p.unit !== "un") {
+          it.quantity = p.quantity;
+          it.unit = p.unit;
+          if (it.notes === `Embalagem: ${size}`) delete it.notes;
+        }
+      });
     });
     this.on("populate", (tx) => {
       const now = Date.now();

@@ -77,11 +77,13 @@ function QuickConfirm({ prefill, fromMemory, onAdded, onDetails }: {
     if (!clean) return;
     await db.items.add({
       name: clean, quantity: qty, unit, category, location, purchaseDate: today(), expiryDate: expiry,
-      ...(prefill.notes ? { notes: prefill.notes } : {}), ...(prefill.barcode ? { barcode: prefill.barcode } : {}), createdAt: Date.now(),
+      ...(prefill.notes ? { notes: prefill.notes } : {}), ...(prefill.barcode ? { barcode: prefill.barcode } : {}),
+      ...(prefill.fullName && prefill.fullName !== clean ? { fullName: prefill.fullName } : {}), createdAt: Date.now(),
     });
     if (prefill.barcode) {
       await db.barcodes.put({
-        code: prefill.barcode, name: clean, category, location, unit,
+        code: prefill.barcode, name: clean, category, location, unit, quantity: qty, v: 2,
+        ...(prefill.fullName ? { fullName: prefill.fullName } : {}),
         ...(prefill.notes?.startsWith("Embalagem: ") ? { size: prefill.notes.slice(11) } : {}),
       });
     }
@@ -92,10 +94,11 @@ function QuickConfirm({ prefill, fromMemory, onAdded, onDetails }: {
     <div className="stack">
       <div className="notice ok small icon-label"><CircleCheck size={16} />{fromMemory ? "Produto que você já cadastrou." : "Produto encontrado. Confira o nome."}</div>
       <input type="text" value={name} onChange={(e) => setName(e.target.value)} aria-label="Nome" style={{ fontWeight: 600 }} />
+      {prefill.fullName && prefill.fullName !== name && <div className="small muted" style={{ marginTop: -4 }}>No código: {prefill.fullName}</div>}
       {prefill.notes && <div className="small muted" style={{ marginTop: -4 }}>{prefill.notes}</div>}
       <div className="row">
-        <button className="btn" aria-label="Menos" onClick={() => setQty((q) => Math.max(1, q - 1))} style={{ minWidth: 48 }}><Minus size={18} /></button>
-        <b style={{ minWidth: 40, textAlign: "center", fontSize: "1.2rem" }}>{qty}</b>
+        <button className="btn" aria-label="Menos" onClick={() => setQty((q) => Math.max(unit === "kg" || unit === "L" ? 0.5 : 1, +(q - (q > 1 ? 1 : 0.5)).toFixed(2)))} style={{ minWidth: 48 }}><Minus size={18} /></button>
+        <b style={{ minWidth: 40, textAlign: "center", fontSize: "1.2rem" }}>{String(qty).replace(".", ",")}</b>
         <button className="btn" aria-label="Mais" onClick={() => setQty((q) => q + 1)} style={{ minWidth: 48 }}><Plus size={18} /></button>
         <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unidade" style={{ width: "auto", flex: 1 }}>
           {UNITS.map((u) => <option key={u}>{u}</option>)}

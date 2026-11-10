@@ -381,3 +381,45 @@ batido e mexa bem.
     expect(r.steps).toEqual(["Bata.", "Asse."]);
   });
 });
+
+import { packageSize, simplifyProductName } from "../productName";
+import { categoryFromTags, productPrefill } from "../barcode";
+
+describe("barcode product names", () => {
+  it.each([
+    ["Arroz Saboroso Integral Tipo 1 5kg", ["Saboroso"], "Arroz integral"],
+    ["Arroz Tio João Tipo 1 Longo Fino 5kg", ["Tio João"], "Arroz"],
+    ["Leite condensado Moça", ["Moça", "Nestlé"], "Leite condensado"],
+    ["Biscoito Recheado Passatempo Chocolate 130g", ["Nestlé", "Passatempo"], "Biscoito recheado chocolate"],
+    ["Feijão Carioca Camil 1kg", ["Camil"], "Feijão carioca"],
+    ["Leite de Coco Sococo 200ml", ["Sococo"], "Leite de coco"],
+    ["Café Torrado e Moído Pilão 500g", ["Pilão"], "Café torrado"],
+    ["Biscoito Maizena", [], "Biscoito maizena"],
+  ])("%s → %s", (full, brands, expected) => {
+    expect(simplifyProductName(full, brands)).toBe(expected);
+  });
+  it.each([
+    ["5 kg", { quantity: 5, unit: "kg" }],
+    ["5kg", { quantity: 5, unit: "kg" }],
+    ["1 L", { quantity: 1, unit: "L" }],
+    ["1000 ml", { quantity: 1, unit: "L" }],
+    ["2000 g", { quantity: 2, unit: "kg" }],
+    ["12 x 200 ml", { quantity: 12, unit: "un" }],
+    ["395 g", null],
+    ["", null],
+  ])("size %s", (raw, expected) => {
+    expect(packageSize(raw)).toEqual(expected);
+  });
+  it("does not mistake rice for a drink (generic 'and-beverages' tag)", () => {
+    const tags = ["en:plant-based-foods-and-beverages", "en:plant-based-foods", "en:cereals-and-potatoes", "en:seeds", "en:cereal-grains", "en:rices"];
+    expect(categoryFromTags(tags, "Arroz integral")).toBe("graos");
+    expect(categoryFromTags(tags, "Produto xyz")).toBe("graos");
+    expect(categoryFromTags(["en:beverages", "en:juices"], "Del valle")).toBe("bebidas");
+  });
+  it("builds a tidy prefill", () => {
+    expect(productPrefill("Arroz Saboroso Integral Tipo 1 5kg", ["Saboroso"], "5 kg", ["en:plant-based-foods-and-beverages"])).toEqual({
+      name: "Arroz integral", fullName: "Arroz Saboroso Integral Tipo 1 5kg", category: "graos", location: "despensa", quantity: 5, unit: "kg",
+    });
+    expect(productPrefill("Leite condensado Moça", ["Moça"], "395 g").notes).toBe("Embalagem: 395 g");
+  });
+});

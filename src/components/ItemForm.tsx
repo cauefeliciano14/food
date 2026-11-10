@@ -54,11 +54,15 @@ export function ItemForm({ item, initial, onDone, onNext }: {
     if (!data.name) return;
     if (item?.id != null) await db.items.update(item.id, data);
     else {
-      await db.items.add({ ...data, ...(initial?.barcode ? { barcode: initial.barcode } : {}), createdAt: Date.now() });
+      await db.items.add({
+        ...data, ...(initial?.barcode ? { barcode: initial.barcode } : {}),
+        ...(initial?.fullName && initial.fullName !== data.name ? { fullName: initial.fullName } : {}), createdAt: Date.now(),
+      });
       // Remember what this barcode is, so the next scan is instant and offline.
       if (initial?.barcode) {
         await db.barcodes.put({
-          code: initial.barcode, name: data.name, category, location, unit,
+          code: initial.barcode, name: data.name, category, location, unit, quantity: data.quantity, v: 2,
+          ...(initial.fullName ? { fullName: initial.fullName } : {}),
           ...(initial.notes?.startsWith("Embalagem: ") ? { size: initial.notes.slice(11) } : {}),
         });
       }

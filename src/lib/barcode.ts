@@ -2,6 +2,7 @@ import { db } from "./db";
 import { guessCategory } from "./shopping";
 import { defaultLocation } from "./shelfLife";
 import type { Category, FoodItem } from "./types";
+import { packageSize, simplifyProductName } from "./productName";
 
 /** Open Food Facts category tags → our categories (first match wins). */
 const OFF_CATEGORIES: [string, Category][] = [
@@ -18,11 +19,40 @@ const OFF_CATEGORIES: [string, Category][] = [
   ["fruits", "hortifruti"], ["vegetables", "hortifruti"],
 ];
 
+/** Generic parent tags that say nothing about the food itself. */
+const GENERIC_TAG = /(and-beverages|plant-based-foods$|^en:foods$|^en:groceries$|-based-foods$)/;
+
+/**
+ * Category: the simple product name decides first (arroz → grãos); otherwise
+ * the most specific Open Food Facts tag (tags go general → specific).
+ */
 export function categoryFromTags(tags: string[] = [], name = ""): Category {
-  for (const [needle, cat] of OFF_CATEGORIES) {
-    if (tags.some((t) => t.includes(needle))) return cat;
+  const byName = guessCategory(name);
+  if (byName !== "outros") return byName;
+  for (const tag of [...tags].reverse()) {
+    if (GENERIC_TAG.test(tag)) continue;
+    const parts = tag.split(/[:-]/);
+    for (const [needle, cat] of OFF_CATEGORIES) {
+      if (parts.includes(needle)) return cat;
+    }
   }
-  return guessCategory(name);
+  return "outros";
+}
+
+/** Prefill from a raw product name + package size (also used to upgrade old memory). */
+export function productPrefill(fullName: string, brands: string[], size: string | undefined, tags: string[] = []) {
+  const name = simplifyProductName(fullName, brands);
+  const category = categoryFromTags(tags, name);
+  const pkg = packageSize(size);
+  return {
+    name,
+    fullName: fullName.trim(),
+    category,
+    location: defaultLocation(category, name),
+    quantity: pkg?.quantity ?? 1,
+    unit: pkg?.unit ?? "un",
+    ...(size && !pkg ? { notes: `Embalagem: ${size.trim()}` } : {}),
+  };
 }
 
 export function isValidBarcode(code: string): boolean {
@@ -41,41 +71,42 @@ export interface BarcodeLookup {
  */
 export async function lookupBarcode(code: string, fetchImpl: typeof fetch = fetch): Promise<BarcodeLookup> {
   const known = await db.barcodes.get(code);
-  if (known) {
-    return {
-      found: true,
-      source: "memoria",
-      prefill: {
-        barcode: code, name: known.name, category: known.category, location: known.location, unit: known.unit,
-        quantity: 1, ...(known.size ? { notes: `Embalagem: ${known.size}` } : {}),
-      },
-    };
+  if (known && known.v !== 2) {
+    // remembered by an older version: refresh from the database (brands, size) when online
+    const fresh = await fetchOff(code, fetchImpl);
+    if (fresh) return { found: true, source: "memoria", prefill: { ...fresh, location: known.location } };
   }
+  if (known) {
+    const base = known.v === 2
+      ? {
+          name: known.name, fullName: known.fullName, category: known.category, location: known.location,
+          quantity: known.quantity ?? 1, unit: known.unit, ...(known.size ? { notes: `Embalagem: ${known.size}` } : {}),
+        }
+      : // remembered before names were simplified: redo it, keeping the user's place
+        { ...productPrefill(known.name, [], known.size), location: known.location };
+    return { found: true, source: "memoria", prefill: { barcode: code, ...base } };
+  }
+  const off = await fetchOff(code, fetchImpl);
+  if (off) return { found: true, source: "openfoodfacts", prefill: off };
+  return { found: false, source: "nenhum", prefill: { barcode: code, quantity: 1, unit: "un" } };
+}
+
+async function fetchOff(code: string, fetchImpl: typeof fetch): Promise<Partial<FoodItem> | null> {
   try {
     const res = await fetchImpl(
       `https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=product_name,product_name_pt,generic_name_pt,brands,quantity,categories_tags`,
       { signal: AbortSignal.timeout(8000) },
     );
-    if (res.ok) {
-      const data = await res.json();
-      const p = data?.product;
-      const baseName: string = (p?.product_name_pt || p?.product_name || p?.generic_name_pt || "").trim();
-      if (data?.status === 1 && baseName) {
-        const brand = String(p.brands ?? "").split(",")[0].trim();
-        const name = brand && !baseName.toLowerCase().includes(brand.toLowerCase()) ? `${baseName} ${brand}` : baseName;
-        const category = categoryFromTags(p.categories_tags, baseName);
-        return {
-          found: true,
-          source: "openfoodfacts",
-          prefill: {
-            barcode: code, name, category, location: defaultLocation(category, baseName), unit: "un", quantity: 1,
-            ...(p.quantity ? { notes: `Embalagem: ${String(p.quantity).trim()}` } : {}),
-          },
-        };
-      }
-    }
+    if (!res.ok) return null;
+    const data = await res.json();
+    const p = data?.product;
+    const baseName: string = (p?.product_name_pt || p?.product_name || p?.generic_name_pt || "").trim();
+    if (data?.status !== 1 || !baseName) return null;
+    const brands = String(p.brands ?? "").split(",").map((x: string) => x.trim()).filter(Boolean);
+    const brand = brands[0] ?? "";
+    const full = brand && !baseName.toLowerCase().includes(brand.toLowerCase()) ? `${baseName} ${brand}` : baseName;
+    return { barcode: code, ...productPrefill(full, brands, p.quantity ? String(p.quantity) : undefined, p.categories_tags ?? []) };
   } catch {
-    /* offline or timeout: fall through to manual entry */
+    return null; // offline or timeout
   }
-  return { found: false, source: "nenhum", prefill: { barcode: code, quantity: 1, unit: "un" } };
 }

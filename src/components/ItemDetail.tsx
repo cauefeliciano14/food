@@ -30,7 +30,7 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
   return (
     <div className="stack">
       <div className="card stack">
-        <div className="row"><CategoryIcon category={item.category} size={48} /><div><b>{item.name}</b><div className="small muted">{categoryInfo(item.category).label}</div></div></div>
+        <div className="row"><CategoryIcon category={item.category} size={48} /><div style={{ minWidth: 0 }}><b>{item.name}</b><div className="small muted">{categoryInfo(item.category).label}</div></div></div>
         <div className="row wrap small">
           <span>{fmtQty(item.quantity, item.unit)}</span>·<span className="icon-label"><LocationIcon location={item.location} />{locationInfo(item.location).label}</span>
         </div>
@@ -41,6 +41,7 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
           <ItemBadge item={item} />
         </div>
         {note && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Info size={14} style={{ marginTop: 3 }} /><span>{note}</span></div>}
+        {item.fullName && item.fullName !== item.name && <div className="small"><span className="muted">Nome no código: </span>{item.fullName}</div>}
         {item.notes && <div className="small">{item.notes}</div>}
       </div>
 

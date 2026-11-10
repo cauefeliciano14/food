@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { isValidBarcode } from "../lib/barcode";
 import { nativeScan, ScanCanceled, useNativeScanner } from "../lib/nativeScanner";
+import { QrCode, ScanBarcode } from "lucide-react";
 
 /**
  * Camera reader. mode "produto": EAN/UPC barcodes on packages.
@@ -47,7 +48,7 @@ function NativeScanner({ onCode, mode = "produto" }: { onCode: (code: string) =>
       {status && <div className="notice small">{status}</div>}
       {error && <div className="error small">{error}</div>}
       <button className="btn primary block" style={{ minHeight: 56 }} onClick={open} disabled={busy}>
-        {mode === "qr" ? "🔳 Abrir leitor de QR code" : "▮▯▮ Abrir leitor de código de barras"}
+        {mode === "qr" ? <><QrCode size={20} />Abrir leitor de QR code</> : <><ScanBarcode size={20} />Abrir leitor de código de barras</>}
       </button>
       <ManualEntry mode={mode} onCode={onCode} />
     </div>

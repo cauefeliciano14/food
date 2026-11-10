@@ -11,6 +11,7 @@ App pessoal para controlar a comida de casa e parar de desperdiçar:
 - **Código de barras** — aponte a câmera para a embalagem; o app busca o produto no Open Food Facts (base gratuita) e preenche nome e categoria. Da segunda vez, ele lembra sozinho (funciona offline). "Adicionar e ler outro" agiliza guardar as compras.
 - **Cardápio da semana** — em Receitas → Semana, escolha almoço/jantar de cada dia ou toque em "Preencher vazios" (prioriza o que você já tem e o que vence antes). "Lista da semana" põe na lista de compras o que falta — conferindo a validade no dia de cada refeição.
 - **Desperdício** — na tela inicial, "ver desperdício": aproveitado × jogado fora nos últimos 6 meses, quanto custou (quando o item tem preço — vem da foto da nota) e o que mais estraga, com dicas.
+- **Gestos** — na despensa, deslize um item para a direita quando usar (tira 1 unidade, ou tudo se for por peso) e para a esquerda se jogou fora; dá para desfazer.
 - **Modo escuro** — Ajustes → Aparência: Automático (segue o celular), Claro ou Escuro.
 - **"Cozinhei"** — ao fazer uma receita, marca o que acabou e o app tira da despensa.
 - **Avisos** — notificação diária (ao abrir o app) do que vence nos próximos dias, e um placar de quanto foi aproveitado × jogado fora.

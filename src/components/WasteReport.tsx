@@ -4,6 +4,8 @@ import { db } from "../lib/db";
 import { brl, monthlyStats, tipFor, topWasted, wastedByCategory } from "../lib/waste";
 import { categoryInfo } from "../lib/types";
 import { formatBR } from "../lib/dates";
+import { ChartColumn, Lightbulb } from "lucide-react";
+import { CategoryIcon, EmptyState } from "./icons";
 
 export function WasteReport() {
   const history = useLiveQuery(() => db.history.toArray(), []);
@@ -14,10 +16,9 @@ export function WasteReport() {
 
   if (history.length === 0) {
     return (
-      <div className="empty">
-        <div className="big">📊</div>
+      <EmptyState icon={ChartColumn}>
         <p>Ainda não há histórico. Quando você usar um item (“Usei”) ou jogar fora (“Joguei fora”), ele entra aqui.</p>
-      </div>
+      </EmptyState>
     );
   }
 
@@ -31,14 +32,14 @@ export function WasteReport() {
 
   return (
     <div className="stack">
-      <div className="stats">
-        <div className="stat"><b>{cur.wasteRate == null || !enough(cur) ? "—" : `${Math.round(cur.wasteRate * 100)}%`}</b><span className="small muted">{enough(cur) || cur.wasteRate == null ? "desperdício este mês" : "poucos dados este mês"}</span></div>
-        <div className="stat"><b>{cur.wasted}</b><span className="small muted">jogados fora este mês</span></div>
-        <div className="stat"><b>{cur.wastedValue > 0 ? brl(cur.wastedValue) : "—"}</b><span className="small muted">em R$ este mês</span></div>
+      <div className="kpis">
+        <div className="kpi"><b>{cur.wasteRate == null || !enough(cur) ? "—" : `${Math.round(cur.wasteRate * 100)}%`}</b><span className="small muted">{enough(cur) || cur.wasteRate == null ? "desperdício este mês" : "poucos dados este mês"}</span></div>
+        <div className="kpi"><b>{cur.wasted}</b><span className="small muted">jogados fora este mês</span></div>
+        <div className="kpi"><b>{cur.wastedValue > 0 ? brl(cur.wastedValue) : "—"}</b><span className="small muted">em R$ este mês</span></div>
       </div>
       {enough(prev) && enough(cur) && prev.wasteRate != null && cur.wasteRate != null && (
         <div className="small muted">
-          {cur.wasteRate < prev.wasteRate ? "📉 Melhor que" : cur.wasteRate > prev.wasteRate ? "📈 Pior que" : "Igual a"} {prev.label} ({Math.round(prev.wasteRate * 100)}%).
+          {cur.wasteRate < prev.wasteRate ? "Melhor que" : cur.wasteRate > prev.wasteRate ? "Pior que" : "Igual a"} {prev.label} ({Math.round(prev.wasteRate * 100)}%).
         </div>
       )}
 
@@ -69,20 +70,20 @@ export function WasteReport() {
         </div>
       </div>
 
-      <h2>🗑️ O que mais estraga <span className="small muted">(90 dias)</span></h2>
+      <h2>O que mais estraga <span className="small muted">(90 dias)</span></h2>
       {top.length === 0 ? (
-        <div className="muted small">Nada jogado fora nos últimos 90 dias. 👏</div>
+        <div className="muted small">Nada jogado fora nos últimos 90 dias.</div>
       ) : (
         <>
           {totalValue90 > 0 && <div className="small muted">Total com preço conhecido: <b>{brl(totalValue90)}</b></div>}
           <div className="list">
             {top.slice(0, 8).map((t) => (
               <div key={t.name} className="item" style={{ alignItems: "flex-start" }}>
-                <div className="emoji">{categoryInfo(t.category).icon}</div>
+                <CategoryIcon category={t.category} />
                 <div className="body">
                   <div className="row"><span className="title" style={{ flex: 1 }}>{t.name}</span><span className="badge urgente">{t.count}x</span></div>
                   <div className="small muted">Última vez: {formatBR(t.lastDate)}{t.value > 0 && <> · {brl(t.value)}</>}</div>
-                  <div className="small" style={{ marginTop: 4 }}>💡 {tipFor(t)}</div>
+                  <div className="small icon-label" style={{ marginTop: 6, alignItems: "flex-start" }}><Lightbulb size={14} style={{ marginTop: 2 }} /><span>{tipFor(t)}</span></div>
                 </div>
               </div>
             ))}
@@ -96,7 +97,7 @@ export function WasteReport() {
           <div className="bars">
             {cats.map((c) => (
               <div key={c.category} className="bar-row" title={`${categoryInfo(c.category).label}: ${c.count}`}>
-                <span className="bar-label wide">{categoryInfo(c.category).icon} {categoryInfo(c.category).label}</span>
+                <span className="bar-label wide">{categoryInfo(c.category).label}</span>
                 <div className="bar-track"><div className="seg waste" style={{ width: `${(c.count / maxCat) * 100}%` }} /></div>
                 <span className="bar-value small">{c.count}</span>
               </div>

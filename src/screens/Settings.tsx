@@ -3,6 +3,7 @@ import { db, exportBackup, importBackup } from "../lib/db";
 import { applyTheme, loadSettings, saveSettings, type Theme } from "../lib/settings";
 import { today } from "../lib/dates";
 import { isNative, saveTextFile } from "../lib/native";
+import { Bell, Download, Palette, Save, Sparkles } from "lucide-react";
 
 export function Settings() {
   const [s, setS] = useState(loadSettings());
@@ -30,7 +31,7 @@ export function Settings() {
       const data = JSON.parse(await file.text());
       if (!confirm("Importar vai SUBSTITUIR todos os dados atuais. Continuar?")) return;
       await importBackup(data);
-      setMsg("Backup restaurado ✔");
+      setMsg("Backup restaurado");
     } catch (e) {
       setMsg(e instanceof Error ? e.message : "Arquivo inválido.");
     }
@@ -41,12 +42,12 @@ export function Settings() {
       <header className="page-header"><h1>Ajustes</h1></header>
       <div className="page stack">
         <div className="card stack">
-          <b>🎨 Aparência</b>
+          <b className="icon-label"><Palette size={18} />Aparência</b>
           <div className="segmented" role="radiogroup" aria-label="Tema">
             {([
-              ["auto", "📱 Automático"],
-              ["claro", "☀️ Claro"],
-              ["escuro", "🌙 Escuro"],
+              ["auto", "Automático"],
+              ["claro", "Claro"],
+              ["escuro", "Escuro"],
             ] as [Theme, string][]).map(([v, label]) => (
               <button key={v} role="radio" aria-checked={s.theme === v} className={s.theme === v ? "active" : ""}
                 onClick={() => { update({ theme: v }); applyTheme(v); }}>{label}</button>
@@ -56,7 +57,7 @@ export function Settings() {
         </div>
 
         <div className="card stack">
-          <b>🤖 IA (opcional, paga): foto da nota e sugestão de receitas</b>
+          <b className="icon-label"><Sparkles size={18} />IA (opcional, paga)</b>
           <p className="small muted" style={{ margin: 0 }}>
             Não é necessária para o QR code da nota nem para o código de barras, que são grátis. Usa o Claude (Anthropic). Crie uma chave em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a> e cole aqui.
             A chave fica salva apenas neste aparelho e é enviada só para a API da Anthropic. Cada leitura de nota custa alguns centavos.
@@ -65,7 +66,7 @@ export function Settings() {
         </div>
 
         <div className="card stack">
-          <b>🔔 Avisos de validade</b>
+          <b className="icon-label"><Bell size={18} />Avisos de validade</b>
           <p className="small muted" style={{ margin: 0 }}>
             Ao abrir o app, ele avisa (uma vez por dia) o que vence nos próximos dias.
           </p>
@@ -79,11 +80,11 @@ export function Settings() {
           {perm !== "granted" && typeof Notification !== "undefined" && (
             <button className="btn" onClick={async () => setPerm(await Notification.requestPermission())}>Permitir notificações</button>
           )}
-          {perm === "granted" && <span className="small muted">Notificações permitidas ✔</span>}
+          {perm === "granted" && <span className="small muted">Notificações permitidas</span>}
         </div>
 
         <div className="card stack">
-          <b>💾 Backup</b>
+          <b className="icon-label"><Save size={18} />Backup</b>
           <p className="small muted" style={{ margin: 0 }}>Seus dados ficam só neste aparelho/navegador. Exporte de vez em quando para não perder.</p>
           <div className="grid-2">
             <button className="btn" onClick={doExport}>Exportar</button>
@@ -103,12 +104,12 @@ export function Settings() {
         </div>
         {isNative() && (
           <div className="card stack">
-            <b>📲 Atualizar o app</b>
+            <b className="icon-label"><Download size={18} />Atualizar o app</b>
             <p className="small muted" style={{ margin: 0 }}>Baixe o APK mais novo e instale por cima — seus dados continuam.</p>
             <a className="btn" href="https://github.com/cauefeliciano14/food/releases/latest" target="_blank" rel="noreferrer">Ver versão mais recente</a>
           </div>
         )}
-        <p className="small muted" style={{ textAlign: "center" }}>Despensa{import.meta.env.VITE_APP_VERSION ? ` ${import.meta.env.VITE_APP_VERSION}` : ""} · feito pra mim 🧡</p>
+        <p className="small muted" style={{ textAlign: "center" }}>Despensa{import.meta.env.VITE_APP_VERSION ? ` ${import.meta.env.VITE_APP_VERSION}` : ""}</p>
       </div>
     </>
   );

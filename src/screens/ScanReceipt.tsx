@@ -8,6 +8,8 @@ import { guessCategory } from "../lib/shopping";
 import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { CATEGORIES, LOCATIONS, UNITS, type Category, type Location } from "../lib/types";
+import { Camera, Image as ImageIcon, PartyPopper, QrCode } from "lucide-react";
+import { IconTile } from "../components/icons";
 
 interface Draft {
   include: boolean;
@@ -153,7 +155,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
   if (stage === "done") {
     return (
       <div className="empty">
-        <div className="big">🎉</div>
+        <IconTile icon={PartyPopper} hue={135} size={72} className="empty-ico" />
         <p>{saved} item(ns) adicionado(s) à despensa.</p>
         <button className="btn primary" onClick={onDone}>Ver despensa</button>
       </div>
@@ -174,7 +176,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     const count = drafts.filter((d) => d.include).length;
     return (
       <div className="stack">
-        <div className="small muted">{store && <>📍 {store} · </>}Confira os itens, ajuste o que precisar e desmarque o que não é comida.</div>
+        <div className="small muted">{store && <>{store} · </>}Confira os itens, ajuste o que precisar e desmarque o que não é comida.</div>
         <label className="field">
           <span>Data da compra</span>
           <input type="date" value={purchaseDate} onChange={(e) => changePurchaseDate(e.target.value)} />
@@ -197,12 +199,12 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
                         {UNITS.map((u) => <option key={u}>{u}</option>)}
                       </select>
                       <select value={d.location} onChange={(e) => update(i, { location: e.target.value as Location })} aria-label="Local">
-                        {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{l.icon} {l.label}</option>)}
+                        {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
                       </select>
                     </div>
                     <div className="grid-2">
                       <select value={d.category} onChange={(e) => update(i, { category: e.target.value as Category })} aria-label="Categoria">
-                        {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
+                        {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                       </select>
                       <input type="date" value={d.expiryDate} aria-label="Validade"
                         onChange={(e) => update(i, { expiryDate: e.target.value })} />
@@ -232,7 +234,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
   return (
     <div className="stack">
       {error && <div className="error">{error}</div>}
-      <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => { setError(""); setStage("qr"); }}>🔳 Ler QR code da nota — grátis</button>
+      <button className="btn primary block" style={{ minHeight: 56 }} onClick={() => { setError(""); setStage("qr"); }}><QrCode size={20} />Ler QR code da nota — grátis</button>
       <p className="muted small" style={{ margin: 0 }}>
         O QR code no fim do cupom (NFC-e) leva à lista exata de produtos e preços na SEFAZ. Funciona no app Android.
       </p>
@@ -243,8 +245,8 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
           <input ref={cameraRef} type="file" accept="image/*" capture="environment" hidden onChange={(e) => onFile(e.target.files?.[0])} />
           <input ref={galleryRef} type="file" accept="image/*" hidden onChange={(e) => onFile(e.target.files?.[0])} />
           <div className="grid-2">
-            <button className="btn" onClick={() => cameraRef.current?.click()}>📷 Tirar foto</button>
-            <button className="btn" onClick={() => galleryRef.current?.click()}>🖼️ Da galeria</button>
+            <button className="btn" onClick={() => cameraRef.current?.click()}><Camera size={18} />Tirar foto</button>
+            <button className="btn" onClick={() => galleryRef.current?.click()}><ImageIcon size={18} />Da galeria</button>
           </div>
           <p className="muted small" style={{ margin: 0 }}>Fotografe o cupom inteiro, de cima, com boa luz. Usa a API da Anthropic (custa centavos por foto).</p>
         </>

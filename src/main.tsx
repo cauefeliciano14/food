@@ -2,6 +2,8 @@ import { StrictMode } from "react";
 import { Capacitor } from "@capacitor/core";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import { ToastProvider } from "./lib/toast";
+import "@fontsource-variable/plus-jakarta-sans";
 import "./styles.css";
 import { applyTheme, loadSettings, watchSystemTheme } from "./lib/settings";
 
@@ -10,7 +12,9 @@ watchSystemTheme();
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <App />
+    <ToastProvider>
+      <App />
+    </ToastProvider>
   </StrictMode>,
 );
 

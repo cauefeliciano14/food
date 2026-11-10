@@ -88,9 +88,9 @@ export interface MealPlanEntry {
   recipeId: number;
 }
 
-export const MEAL_SLOTS: { value: MealSlot; label: string; icon: string }[] = [
-  { value: "almoco", label: "Almoço", icon: "☀️" },
-  { value: "jantar", label: "Jantar", icon: "🌙" },
+export const MEAL_SLOTS: { value: MealSlot; label: string }[] = [
+  { value: "almoco", label: "Almoço" },
+  { value: "jantar", label: "Jantar" },
 ];
 
 /** What we remember about a barcode after the first time it is scanned. */
@@ -103,25 +103,25 @@ export interface BarcodeInfo {
   size?: string;
 }
 
-export const LOCATIONS: { value: Location; label: string; icon: string }[] = [
-  { value: "geladeira", label: "Geladeira", icon: "🧊" },
-  { value: "freezer", label: "Freezer", icon: "❄️" },
-  { value: "despensa", label: "Despensa", icon: "🗄️" },
+export const LOCATIONS: { value: Location; label: string }[] = [
+  { value: "geladeira", label: "Geladeira" },
+  { value: "freezer", label: "Freezer" },
+  { value: "despensa", label: "Despensa" },
 ];
 
-export const CATEGORIES: { value: Category; label: string; icon: string }[] = [
-  { value: "hortifruti", label: "Hortifrúti", icon: "🥬" },
-  { value: "carnes", label: "Carnes", icon: "🥩" },
-  { value: "peixes", label: "Peixes", icon: "🐟" },
-  { value: "laticinios", label: "Laticínios e ovos", icon: "🧀" },
-  { value: "padaria", label: "Padaria", icon: "🍞" },
-  { value: "graos", label: "Grãos e massas", icon: "🌾" },
-  { value: "enlatados", label: "Enlatados e conservas", icon: "🥫" },
-  { value: "temperos", label: "Temperos e molhos", icon: "🧂" },
-  { value: "bebidas", label: "Bebidas", icon: "🧃" },
-  { value: "congelados", label: "Congelados", icon: "🧊" },
-  { value: "lanches", label: "Lanches e doces", icon: "🍪" },
-  { value: "outros", label: "Outros", icon: "📦" },
+export const CATEGORIES: { value: Category; label: string }[] = [
+  { value: "hortifruti", label: "Hortifrúti" },
+  { value: "carnes", label: "Carnes" },
+  { value: "peixes", label: "Peixes" },
+  { value: "laticinios", label: "Laticínios e ovos" },
+  { value: "padaria", label: "Padaria" },
+  { value: "graos", label: "Grãos e massas" },
+  { value: "enlatados", label: "Enlatados e conservas" },
+  { value: "temperos", label: "Temperos e molhos" },
+  { value: "bebidas", label: "Bebidas" },
+  { value: "congelados", label: "Congelados" },
+  { value: "lanches", label: "Lanches e doces" },
+  { value: "outros", label: "Outros" },
 ];
 
 export const UNITS = ["un", "kg", "g", "L", "ml", "pct", "cx", "lata", "dz", "maço"];

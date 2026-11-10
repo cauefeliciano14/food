@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { BookOpen, FilePenLine, House, Package, Plus, ReceiptText, ScanBarcode, ShoppingCart, type LucideIcon } from "lucide-react";
+import { useToast } from "./lib/toast";
+import { IconTile } from "./components/icons";
 import type { FoodItem, Recipe } from "./lib/types";
 import { Home } from "./screens/Home";
 import { Pantry } from "./screens/Pantry";
@@ -37,13 +40,7 @@ export default function App() {
   const [pantryFilter, setPantryFilter] = useState<string | undefined>();
   const [modal, setModal] = useState<Modal>(null);
   const close = () => setModal(null);
-  const [toast, setToast] = useState<{ text: string; undo?: () => void } | null>(null);
-  const toastTimer = useRef<number | undefined>(undefined);
-  const showToast = (text: string, undo?: () => void) => {
-    window.clearTimeout(toastTimer.current);
-    setToast({ text, undo });
-    toastTimer.current = window.setTimeout(() => setToast(null), 4000);
-  };
+  const showToast = useToast();
   const shoppingCount = useLiveQuery(() => db.shopping.filter((s) => !s.done).count(), []) ?? 0;
 
   useEffect(() => {
@@ -67,32 +64,35 @@ export default function App() {
 
   return (
     <div className="app">
-      {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openWaste={() => setModal({ kind: "waste" })} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
-      {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} />}
-      {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} openShopping={() => setTab("compras")} />}
-      {tab === "compras" && <Shopping />}
-      {tab === "ajustes" && <Settings />}
+      <div className="screen" key={tab}>
+        {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openWaste={() => setModal({ kind: "waste" })} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
+        {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} />}
+        {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} openShopping={() => setTab("compras")} />}
+        {tab === "compras" && <Shopping />}
+        {tab === "ajustes" && <Settings />}
+      </div>
 
       <nav className="tabbar">
         <div className="tabbar-inner">
-          <TabBtn icon="🏠" label="Início" active={tab === "inicio"} onClick={() => setTab("inicio")} />
-          <TabBtn icon="🗄️" label="Despensa" active={tab === "despensa"} onClick={() => { setPantryFilter(undefined); setTab("despensa"); }} />
-          <button className="tab add" onClick={() => setModal({ kind: "add-menu" })} aria-label="Adicionar"><span className="ico">+</span>Adicionar</button>
-          <TabBtn icon="📖" label="Receitas" active={tab === "receitas"} onClick={() => setTab("receitas")} />
-          <TabBtn icon="🛒" label="Compras" count={shoppingCount} active={tab === "compras"} onClick={() => setTab("compras")} />
+          <TabBtn icon={House} label="Início" active={tab === "inicio"} onClick={() => setTab("inicio")} />
+          <TabBtn icon={Package} label="Despensa" active={tab === "despensa"} onClick={() => { setPantryFilter(undefined); setTab("despensa"); }} />
+          <button className="tab add" onClick={() => setModal({ kind: "add-menu" })} aria-label="Adicionar comida"><span className="ico"><Plus size={26} strokeWidth={2.5} /></span>Adicionar</button>
+          <TabBtn icon={BookOpen} label="Receitas" active={tab === "receitas"} onClick={() => setTab("receitas")} />
+          <TabBtn icon={ShoppingCart} label="Compras" count={shoppingCount} active={tab === "compras"} onClick={() => setTab("compras")} />
         </div>
       </nav>
 
       {modal?.kind === "add-menu" && (
         <Sheet title="Adicionar comida" onClose={close}>
           <div className="stack">
-            <QuickAdd onAdded={(n) => { close(); showToast(`✔ ${n} ${n === 1 ? "item adicionado" : "itens adicionados"} à despensa`); }} />
-            <div className="add-grid">
-              <button className="btn" onClick={() => setModal({ kind: "barcode" })}><span style={{ fontSize: "1.4rem" }}>▮▯▮</span>Código de barras</button>
-              <button className="btn" onClick={() => setModal({ kind: "scan" })}><span style={{ fontSize: "1.4rem" }}>🧾</span>Nota fiscal (QR)</button>
+            <div className="tiles-3">
+              <button className="tile-btn" onClick={() => setModal({ kind: "barcode" })}><IconTile icon={ScanBarcode} hue={200} size={44} />Código de barras</button>
+              <button className="tile-btn" onClick={() => setModal({ kind: "scan" })}><IconTile icon={ReceiptText} hue={135} size={44} />Nota fiscal</button>
+              <button className="tile-btn" onClick={() => setModal({ kind: "add-manual" })}><IconTile icon={FilePenLine} hue={280} size={44} />Formulário</button>
             </div>
-            <BuyAgain onAdded={(name, undo) => showToast(`✔ ${name} adicionado`, undo)} />
-            <button className="btn ghost block" onClick={() => setModal({ kind: "add-manual" })}>Formulário completo (validade, preço…)</button>
+            <div className="divider">ou escreva o que comprou</div>
+            <QuickAdd onAdded={(n) => { close(); showToast(`${n} ${n === 1 ? "item adicionado" : "itens adicionados"} à despensa`); }} />
+            <BuyAgain onAdded={(name, undo) => showToast(`${name} adicionado`, undo)} />
           </div>
         </Sheet>
       )}
@@ -120,20 +120,14 @@ export default function App() {
           <AISuggest onSaved={openRecipeById} onNeedKey={toSettings} />
         </Sheet>
       )}
-      {toast && (
-        <div className="toast" role="status">
-          <span style={{ flex: 1 }}>{toast.text}</span>
-          {toast.undo && <button onClick={() => { toast.undo!(); setToast(null); }}>Desfazer</button>}
-        </div>
-      )}
     </div>
   );
 }
 
-function TabBtn({ icon, label, active, onClick, count = 0 }: { icon: string; label: string; active: boolean; onClick: () => void; count?: number }) {
+function TabBtn({ icon: Icon, label, active, onClick, count = 0 }: { icon: LucideIcon; label: string; active: boolean; onClick: () => void; count?: number }) {
   return (
-    <button className={`tab ${active ? "active" : ""}`} onClick={onClick}>
-      <span className="ico">{icon}</span>
+    <button className={`tab ${active ? "active" : ""}`} onClick={onClick} aria-current={active ? "page" : undefined}>
+      <span className="ico"><Icon size={22} strokeWidth={active ? 2.4 : 2} /></span>
       {count > 0 && <span className="count">{count}</span>}
       {label}
     </button>

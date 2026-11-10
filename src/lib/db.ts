@@ -35,15 +35,19 @@ export class DespensaDB extends Dexie {
 
 export const db = new DespensaDB();
 
-/** Consume (or discard) some quantity of an item; removes it when it hits zero. */
-export async function consumeItem(item: FoodItem, amount: number, action: "consumido" | "descartado") {
-  if (item.id == null) return;
+/**
+ * Consume (or discard) some quantity of an item; removes it when it hits zero.
+ * Returns an undo function that puts everything back.
+ */
+export async function consumeItem(item: FoodItem, amount: number, action: "consumido" | "descartado"): Promise<() => Promise<void>> {
+  if (item.id == null) return async () => {};
+  let historyId: number | undefined;
   await db.transaction("rw", db.items, db.history, async () => {
     const used = Math.min(amount, item.quantity);
     const left = Math.max(0, +(item.quantity - used).toFixed(3));
     if (left <= 0) await db.items.delete(item.id!);
     else await db.items.update(item.id!, { quantity: left });
-    await db.history.add({
+    historyId = (await db.history.add({
       itemName: item.name,
       category: item.category,
       action,
@@ -51,8 +55,21 @@ export async function consumeItem(item: FoodItem, amount: number, action: "consu
       quantity: used,
       unit: item.unit,
       ...(item.unitPrice ? { value: +(item.unitPrice * used).toFixed(2) } : {}),
-    });
+    })) as number;
   });
+  return async () => {
+    await db.transaction("rw", db.items, db.history, async () => {
+      await db.items.put(item);
+      if (historyId != null) await db.history.delete(historyId);
+    });
+  };
+}
+
+/** Units you count one by one — a quick "usei" takes one of these, not the whole lot. */
+const COUNTABLE = new Set(["un", "lata", "cx", "pct", "dz", "maço"]);
+
+export function quickUseAmount(item: FoodItem): number {
+  return COUNTABLE.has(item.unit) && item.quantity > 1 ? 1 : item.quantity;
 }
 
 export interface Backup {

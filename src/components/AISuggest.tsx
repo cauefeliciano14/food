@@ -4,6 +4,7 @@ import type { GeneratedRecipe } from "../lib/ai";
 import { loadSettings } from "../lib/settings";
 import { daysBetween, expiryStatus, today } from "../lib/dates";
 import { ingredientsToText } from "./RecipeForm";
+import { Sparkles } from "lucide-react";
 
 export function AISuggest({ onSaved, onNeedKey }: { onSaved: (id: number) => void; onNeedKey: () => void }) {
   const [wish, setWish] = useState("");
@@ -46,13 +47,13 @@ export function AISuggest({ onSaved, onNeedKey }: { onSaved: (id: number) => voi
     <div className="stack">
       <p className="small muted">A IA olha sua despensa (priorizando o que vence primeiro) e cria uma receita. Você pode salvá-la no seu livro.</p>
       <input type="text" value={wish} onChange={(e) => setWish(e.target.value)} placeholder="Opcional: algo leve, jantar rápido, sobremesa…" />
-      <button className="btn primary block" onClick={run} disabled={loading}>{loading ? "Pensando…" : "✨ Sugerir receita"}</button>
+      <button className="btn primary block" onClick={run} disabled={loading}>{loading ? "Pensando…" : <><Sparkles size={18} />Sugerir receita</>}</button>
       {loading && <div className="spinner" />}
       {error && <div className="error">{error}</div>}
       {result && (
         <div className="card stack">
           <b>{result.title}</b>
-          <div className="small muted">⏱ {result.minutes} min · 🍽 {result.servings} porções</div>
+          <div className="small muted">{result.minutes} min · {result.servings} porções</div>
           <pre className="small" style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", margin: 0 }}>{ingredientsToText(result.ingredients)}</pre>
           <ol className="steps small">{result.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
           <div className="grid-2">

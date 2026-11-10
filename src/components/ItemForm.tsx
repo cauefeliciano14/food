@@ -99,7 +99,7 @@ export function ItemForm({ item, initial, onDone, onNext }: {
             setLocation(l);
             suggest(name, c, l);
           }}>
-            {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.icon} {c.label}</option>)}
+            {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select>
         </label>
         <label className="field">
@@ -109,7 +109,7 @@ export function ItemForm({ item, initial, onDone, onNext }: {
             setLocation(l);
             suggest(name, category, l);
           }}>
-            {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{l.icon} {l.label}</option>)}
+            {LOCATIONS.map((l) => <option key={l.value} value={l.value}>{l.label}</option>)}
           </select>
         </label>
       </div>

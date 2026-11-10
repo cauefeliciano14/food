@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db, consumeItem } from "../lib/db";
 import { addToShopping } from "../lib/shopping";
@@ -9,6 +9,8 @@ import { addDays } from "../lib/dates";
 import { dayLabel } from "../lib/mealplan";
 import { ExpiryBadge, fmtQty } from "./ItemRow";
 import { RecipeForm } from "./RecipeForm";
+import { CalendarDays, Check, ChefHat, Clock, Minus, Pencil, ShoppingCart, Star, Users, X } from "lucide-react";
+import { dishStyle } from "./icons";
 
 export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { recipe: Recipe; onDone: () => void; onOpenShopping: () => void }) {
   const recipe = useLiveQuery(() => db.recipes.get(initial.id!), [initial.id]) ?? initial;
@@ -22,6 +24,7 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
   const [planSlot, setPlanSlot] = useState<MealSlot>("jantar");
   const [planned, setPlanned] = useState("");
 
+  const dish = dishStyle(recipe);
   if (mode === "edit") return <RecipeForm recipe={recipe} onDone={() => setMode("view")} />;
 
   const matchedItems: FoodItem[] = [];
@@ -55,8 +58,9 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
 
   return (
     <div className="stack">
+      <div className="recipe-hero" style={{ "--h": dish.hue } as CSSProperties}><dish.icon size={52} strokeWidth={1.4} aria-hidden="true" /></div>
       <div className="row wrap small muted">
-        <span>⏱ {recipe.minutes} min</span>·<span>🍽 {recipe.servings} porções</span>
+        <span className="icon-label"><Clock size={14} />{recipe.minutes} min</span>·<span className="icon-label"><Users size={14} />{recipe.servings} {recipe.servings === 1 ? "porção" : "porções"}</span>
         {recipe.tags.map((t) => <span key={t} className="badge sem-data">{t}</span>)}
       </div>
 
@@ -64,7 +68,7 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
         <div className="row"><b>Ingredientes</b><span className="spacer" /><span className="small muted">{m.haveCount}/{m.requiredCount} em casa</span></div>
         {m.ingredients.map((ing, idx) => (
           <div key={idx} className="ing">
-            <span className="mark">{ing.items.length ? "✅" : ing.staple ? "🧂" : ing.optional ? "➖" : "❌"}</span>
+            <span className={`mark ${ing.items.length ? "have" : ing.staple || ing.optional ? "opt" : "miss"}`}>{ing.items.length ? <Check size={14} strokeWidth={3} /> : ing.staple || ing.optional ? <Minus size={14} /> : <X size={14} strokeWidth={3} />}</span>
             <div style={{ flex: 1 }}>
               {ing.name}{ing.amount && <span className="muted"> — {ing.amount}</span>}
               {ing.optional && <span className="muted small"> (opcional)</span>}
@@ -80,14 +84,14 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
 
       {m.missing.length > 0 && (
         <div className="notice small stack">
-          <div>🛒 Para fazer, falta: <b>{m.missing.map((x) => x.name).join(", ")}</b></div>
+          <div>Para fazer, falta: <b>{m.missing.map((x) => x.name).join(", ")}</b></div>
           {addedToList ? (
-            <button className="btn sm block" onClick={onOpenShopping}>✔ Na lista — ver compras</button>
+            <button className="btn sm block" onClick={onOpenShopping}><Check size={16} />Na lista — ver compras</button>
           ) : (
             <button className="btn sm block" onClick={async () => {
               for (const x of m.missing) await addToShopping(x.name, { amount: x.amount, source: "receita", recipe: recipe.title });
               setAddedToList(true);
-            }}>Adicionar o que falta à lista de compras</button>
+            }}><ShoppingCart size={16} />Adicionar o que falta à lista</button>
           )}
         </div>
       )}
@@ -97,10 +101,10 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
         <ol className="steps">{recipe.steps.map((s, i) => <li key={i}>{s}</li>)}</ol>
       </div>
 
-      {matchedItems.length > 0 && <button className="btn primary block" onClick={() => setMode("cook")}>👩‍🍳 Cozinhei esta receita</button>}
+      {matchedItems.length > 0 && <button className="btn primary block" onClick={() => setMode("cook")}><ChefHat size={18} />Cozinhei esta receita</button>}
       {planning ? (
         <div className="card stack">
-          <b>📅 Planejar</b>
+          <b>Planejar</b>
           <div className="grid-2">
             <select value={planDate} onChange={(e) => setPlanDate(e.target.value)} aria-label="Dia">
               {Array.from({ length: 14 }, (_, i) => addDays(today(), i)).map((d, i) => (
@@ -108,7 +112,7 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
               ))}
             </select>
             <select value={planSlot} onChange={(e) => setPlanSlot(e.target.value as MealSlot)} aria-label="Refeição">
-              {MEAL_SLOTS.map((s) => <option key={s.value} value={s.value}>{s.icon} {s.label}</option>)}
+              {MEAL_SLOTS.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
             </select>
           </div>
           <button className="btn primary" onClick={async () => {
@@ -120,11 +124,11 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
           }}>Colocar no cardápio</button>
         </div>
       ) : (
-        <button className="btn block" onClick={() => setPlanning(true)}>{planned ? `✔ No cardápio: ${planned}` : "📅 Planejar para um dia"}</button>
+        <button className="btn block" onClick={() => setPlanning(true)}>{planned ? <><Check size={18} />No cardápio: {planned}</> : <><CalendarDays size={18} />Planejar para um dia</>}</button>
       )}
       <div className="grid-2">
-        <button className="btn" onClick={() => db.recipes.update(recipe.id!, { favorite: !recipe.favorite })}>{recipe.favorite ? "★ Favorita" : "☆ Favoritar"}</button>
-        <button className="btn" onClick={() => setMode("edit")}>✏️ Editar</button>
+        <button className="btn" onClick={() => db.recipes.update(recipe.id!, { favorite: !recipe.favorite })}><Star size={18} fill={recipe.favorite ? "currentColor" : "none"} />{recipe.favorite ? "Favorita" : "Favoritar"}</button>
+        <button className="btn" onClick={() => setMode("edit")}><Pencil size={18} />Editar</button>
       </div>
       <button className="btn danger ghost block" onClick={async () => {
         if (!confirm(`Excluir a receita "${recipe.title}"?`)) return;

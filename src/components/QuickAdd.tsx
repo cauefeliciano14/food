@@ -6,8 +6,10 @@ import { guessCategory } from "../lib/shopping";
 import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { addDays, expiryLabel, today } from "../lib/dates";
 import { normalize } from "../lib/normalize";
-import { LOCATIONS, categoryInfo, locationInfo, type Category, type FoodItem, type HistoryEntry, type Location } from "../lib/types";
+import { locationInfo, type Category, type FoodItem, type HistoryEntry, type Location } from "../lib/types";
 import { fmtQty } from "./ItemRow";
+import { Mic, Plus, Repeat, X } from "lucide-react";
+import { CategoryIcon, LocationIcon } from "./icons";
 
 interface Draft {
   name: string;
@@ -62,7 +64,7 @@ export function QuickAdd({ onAdded }: { onAdded: (count: number) => void }) {
   return (
     <div className="stack">
       <label className="field">
-        <span>✍️ Escreva ou dite (toque no 🎤 do teclado)</span>
+        <span className="icon-label"><Mic size={14} />Escreva ou dite pelo microfone do teclado</span>
         <textarea
           rows={2}
           value={text}
@@ -77,21 +79,21 @@ export function QuickAdd({ onAdded }: { onAdded: (count: number) => void }) {
           <div className="list">
             {drafts.map((d) => (
               <div key={d.i} className="item quick">
-                <div className="emoji">{categoryInfo(d.category).icon}</div>
+                <CategoryIcon category={d.category} size={34} />
                 <div className="body">
                   <div className="title">{d.name}</div>
-                  <div className="small muted">{fmtQty(d.quantity, d.unit)} · {expiryLabel(d.expiryDate)}</div>
+                  <div className="small muted">{fmtQty(d.quantity, d.unit)} · {expiryLabel(d.expiryDate).replace(/^vence (em )?/, "validade: ")}</div>
                 </div>
                 <button className="btn sm" title="Trocar local" aria-label={`Local: ${locationInfo(d.location).label}. Toque para trocar`}
                   onClick={() => setOverrides((o) => ({ ...o, [d.i]: { ...o[d.i], location: NEXT_LOCATION[d.location] } }))}>
-                  {locationInfo(d.location).icon} {locationInfo(d.location).label}
+                  <LocationIcon location={d.location} />{locationInfo(d.location).label}
                 </button>
-                <button className="icon-btn" aria-label={`Remover ${d.name}`} onClick={() => setOverrides((o) => ({ ...o, [d.i]: null }))}>✕</button>
+                <button className="icon-btn" aria-label={`Remover ${d.name}`} onClick={() => setOverrides((o) => ({ ...o, [d.i]: null }))}><X size={18} /></button>
               </div>
             ))}
           </div>
-          <button className="btn primary block" onClick={addAll}>Adicionar {drafts.length} {drafts.length === 1 ? "item" : "itens"}</button>
-          <div className="small muted">Toque no local para trocar ({LOCATIONS.map((l) => l.icon).join(" → ")}). Para mudar a validade, edite o item depois.</div>
+          <button className="btn primary block" onClick={addAll}><Plus size={18} />Adicionar {drafts.length} {drafts.length === 1 ? "item" : "itens"}</button>
+          <div className="small muted">Toque no local para trocar. Para mudar a validade, edite o item depois.</div>
         </>
       )}
     </div>
@@ -116,15 +118,15 @@ export function BuyAgain({ onAdded }: { onAdded: (name: string, undo: () => void
   if (frequent.length === 0) return null;
   return (
     <div>
-      <div className="small muted" style={{ marginBottom: 6 }}>🔁 Comprar de novo (um toque adiciona 1)</div>
-      <div className="chips" style={{ flexWrap: "wrap" }}>
+      <div className="small muted icon-label" style={{ marginBottom: 8 }}><Repeat size={14} />Comprar de novo — um toque adiciona 1</div>
+      <div className="chips">
         {frequent.map((f) => (
           <button key={f.name} className="chip" onClick={async () => {
             const d = enrich(f.name, 1, f.unit && f.unit !== "kg" && f.unit !== "g" ? f.unit : "un", pantry, history);
             const id = await db.items.add({ ...d, category: f.category, purchaseDate: today(), createdAt: Date.now() });
             onAdded(f.name, () => db.items.delete(id as number));
           }}>
-            + {categoryInfo(f.category).icon} {f.name}
+            <Plus size={14} />{f.name}
           </button>
         ))}
       </div>

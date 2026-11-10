@@ -6,6 +6,9 @@ import { normalize } from "../lib/normalize";
 import { today } from "../lib/dates";
 import type { Recipe } from "../lib/types";
 import { Planner } from "../components/Planner";
+import { BookOpen, CalendarDays, Plus, Search, Sparkles, UtensilsCrossed } from "lucide-react";
+import { RecipeCard } from "../components/RecipeCard";
+import { EmptyState } from "../components/icons";
 
 type Filter = "posso" | "quase" | "todas" | "favoritas" | "minhas";
 
@@ -53,52 +56,37 @@ export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe:
       <header className="page-header">
         <h1>Receitas</h1>
         <div className="row">
-          <button className="btn sm" onClick={onAI}>✨ IA</button>
-          <button className="btn sm primary" onClick={onNew}>+ Nova</button>
+          <button className="btn sm" onClick={onAI}><Sparkles size={16} />IA</button>
+          <button className="btn sm primary" onClick={onNew}><Plus size={16} />Nova</button>
         </div>
       </header>
       <div className="page stack">
         <div className="segmented" role="tablist">
-          <button role="tab" aria-selected={view === "livro"} className={view === "livro" ? "active" : ""} onClick={() => setView("livro")}>📖 Livro</button>
-          <button role="tab" aria-selected={view === "semana"} className={view === "semana" ? "active" : ""} onClick={() => setView("semana")}>📅 Semana</button>
+          <button role="tab" aria-selected={view === "livro"} className={view === "livro" ? "active" : ""} onClick={() => setView("livro")}><BookOpen size={16} />Livro</button>
+          <button role="tab" aria-selected={view === "semana"} className={view === "semana" ? "active" : ""} onClick={() => setView("semana")}><CalendarDays size={16} />Semana</button>
         </div>
         {view === "semana" ? <Planner openRecipe={openRecipe} openShopping={openShopping} /> : <>
-        <input type="search" placeholder="Buscar receita ou ingrediente…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <div className="search"><Search size={18} /><input type="search" placeholder="Buscar receita ou ingrediente…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
         <div className="chips">
           {([
-            ["posso", `✅ Posso fazer (${counts.posso})`],
-            ["quase", `🟡 Falta pouco (${counts.quase})`],
-            ["todas", `📖 Todas (${recipes.length})`],
-            ["favoritas", "⭐ Favoritas"],
-            ["minhas", "✍️ Minhas"],
+            ["posso", `Posso fazer (${counts.posso})`],
+            ["quase", `Falta pouco (${counts.quase})`],
+            ["todas", `Todas (${recipes.length})`],
+            ["favoritas", "Favoritas"],
+            ["minhas", "Minhas"],
           ] as [Filter, string][]).map(([v, label]) => (
             <button key={v} className={`chip ${filter === v ? "active" : ""}`} onClick={() => setFilter(v)}>{label}</button>
           ))}
         </div>
         {shown.length === 0 ? (
-          <div className="empty">
-            <div className="big">🍽️</div>
+          <EmptyState icon={UtensilsCrossed}>
             <p>
-              {filter === "posso" ? "Com o que tem agora, nenhuma receita do livro fecha 100%. Veja “Falta pouco” ou peça uma sugestão à IA." : "Nada por aqui."}
+              {filter === "posso" ? "Com o que tem agora, nenhuma receita do livro fecha 100%. Veja “Falta pouco”." : "Nada por aqui."}
             </p>
-          </div>
+          </EmptyState>
         ) : (
-          <div className="list">
-            {shown.map((m) => (
-              <div key={m.recipe.id} className="item" onClick={() => openRecipe(m.recipe)} style={{ cursor: "pointer", alignItems: "stretch" }}>
-                <div className="body stack" style={{ marginTop: 0 }}>
-                  <div className="row">
-                    <div className="title" style={{ flex: 1 }}>{m.recipe.favorite && "⭐ "}{m.recipe.title}</div>
-                    <span className="small muted">⏱ {m.recipe.minutes} min</span>
-                  </div>
-                  <div className="progress" style={{ marginTop: 6 }}><div style={{ width: `${m.score * 100}%` }} /></div>
-                  <div className="small muted" style={{ marginTop: 4 }}>
-                    {m.canMake ? "Você tem todos os ingredientes" : `Falta: ${m.missing.map((x) => x.name).join(", ")}`}
-                    {m.expiringUsed.length > 0 && <> · <span style={{ color: "var(--warn)" }}>aproveita {m.expiringUsed.map((i) => i.name).join(", ")}</span></>}
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div className="rgrid">
+            {shown.map((m) => <RecipeCard key={m.recipe.id} match={m} onClick={() => openRecipe(m.recipe)} />)}
           </div>
         )}
         </>}

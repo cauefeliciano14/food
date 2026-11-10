@@ -8,6 +8,8 @@ import { addDays, today } from "../lib/dates";
 import { normalize } from "../lib/normalize";
 import { MEAL_SLOTS, type MealSlot, type Recipe } from "../lib/types";
 import { Sheet } from "./Sheet";
+import { ChevronLeft, ChevronRight, Plus, Search, ShoppingCart, Sparkles, X } from "lucide-react";
+import { IconTile, MealIcon, dishStyle } from "./icons";
 
 export function Planner({ openRecipe, openShopping }: { openRecipe: (r: Recipe) => void; openShopping: () => void }) {
   const ref = today();
@@ -47,17 +49,17 @@ export function Planner({ openRecipe, openShopping }: { openRecipe: (r: Recipe) 
   return (
     <div className="stack">
       <div className="row">
-        <button className="icon-btn" aria-label="Semana anterior" onClick={() => setStart(addDays(start, -7))}>‹</button>
+        <button className="icon-btn" aria-label="Semana anterior" onClick={() => setStart(addDays(start, -7))}><ChevronLeft size={22} /></button>
         <div style={{ flex: 1, textAlign: "center" }}>
           <b>{start === weekStart(ref) ? "Esta semana" : `Semana de ${dayLabel(start).slice(4)}`}</b>
           <div className="small muted">{dayLabel(start).slice(4)} a {dayLabel(end).slice(4)}</div>
         </div>
-        <button className="icon-btn" aria-label="Próxima semana" onClick={() => setStart(addDays(start, 7))}>›</button>
+        <button className="icon-btn" aria-label="Próxima semana" onClick={() => setStart(addDays(start, 7))}><ChevronRight size={22} /></button>
       </div>
 
       <div className="grid-2">
-        <button className="btn" onClick={fill} disabled={emptyFutureSlots <= 0}>✨ Preencher vazios</button>
-        <button className="btn primary" onClick={makeList} disabled={needs.length === 0}>🛒 Lista da semana{needs.length ? ` (${needs.length})` : ""}</button>
+        <button className="btn" onClick={fill} disabled={emptyFutureSlots <= 0}><Sparkles size={16} />Preencher vazios</button>
+        <button className="btn primary" onClick={makeList} disabled={needs.length === 0}><ShoppingCart size={16} />Lista da semana{needs.length ? ` (${needs.length})` : ""}</button>
       </div>
       {toast && (
         <div className="notice small row">
@@ -78,19 +80,19 @@ export function Planner({ openRecipe, openShopping }: { openRecipe: (r: Recipe) 
                 const missing = r && !past ? matchRecipe(r, pantry, d).missing.length : 0;
                 return (
                   <div key={slot.value} className="meal">
-                    <span className="meal-slot small muted">{slot.icon} {slot.label}</span>
+                    <span className="meal-slot small muted"><MealIcon slot={slot.value} />{slot.label}</span>
                     {e ? (
                       <>
                         <button className="meal-recipe" onClick={() => r && openRecipe(r)}>
                           {r ? r.title : <span className="muted">(receita excluída)</span>}
-                          {r && !past && (missing ? <span className="small" style={{ color: "var(--warn)" }}> · falta {missing}</span> : <span className="small" style={{ color: "var(--primary)" }}> · ✔ tem tudo</span>)}
+                          {r && !past && (missing ? <span className="small" style={{ color: "var(--warn)" }}> · falta {missing}</span> : <span className="small" style={{ color: "var(--primary)" }}> · tem tudo</span>)}
                         </button>
-                        <button className="icon-btn" aria-label="Remover do cardápio" onClick={() => db.mealPlan.delete(e.id!)}>✕</button>
+                        <button className="icon-btn" aria-label="Remover do cardápio" onClick={() => db.mealPlan.delete(e.id!)}><X size={18} /></button>
                       </>
                     ) : past ? (
                       <span className="muted small" style={{ flex: 1 }}>—</span>
                     ) : (
-                      <button className="btn ghost sm meal-add" onClick={() => setPicking({ date: d, slot: slot.value })}>+ escolher</button>
+                      <button className="btn ghost sm meal-add" onClick={() => setPicking({ date: d, slot: slot.value })}><Plus size={14} />escolher</button>
                     )}
                   </div>
                 );
@@ -125,14 +127,14 @@ function RecipePicker({ date, onPick }: { date: string; onPick: (r: Recipe) => v
   const shown = ranked.filter((m) => !nq || normalize(m.recipe.title).includes(nq));
   return (
     <div className="stack">
-      <input type="search" placeholder="Buscar receita…" value={q} onChange={(e) => setQ(e.target.value)} />
+      <div className="search"><Search size={18} /><input type="search" placeholder="Buscar receita…" value={q} onChange={(e) => setQ(e.target.value)} /></div>
       <div className="list">
         {shown.map((m) => (
           <button key={m.recipe.id} className="item" style={{ textAlign: "left", cursor: "pointer", width: "100%" }} onClick={() => onPick(m.recipe)}>
-            <div className="emoji">{m.canMake ? "✅" : m.missing.length <= 2 ? "🟡" : "⚪"}</div>
+            <IconTile icon={dishStyle(m.recipe).icon} hue={dishStyle(m.recipe).hue} />
             <div className="body">
-              <div className="title">{m.recipe.favorite && "⭐ "}{m.recipe.title}</div>
-              <div className="small muted">{m.canMake ? "Tem tudo" : `Falta: ${m.missing.map((x) => x.name).join(", ")}`}</div>
+              <div className="title">{m.recipe.title}</div>
+              <div className="meta">{m.canMake ? <span style={{ color: "var(--primary)", fontWeight: 700 }}>Tem tudo</span> : `Falta: ${m.missing.map((x) => x.name).join(", ")}`}</div>
             </div>
           </button>
         ))}

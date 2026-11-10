@@ -6,6 +6,8 @@ import { db } from "../lib/db";
 import { addDays, today } from "../lib/dates";
 import { suggestShelfLifeDays } from "../lib/shelfLife";
 import { LOCATIONS, UNITS, type FoodItem, type Location } from "../lib/types";
+import { CircleCheck, Minus, Plus } from "lucide-react";
+import { LocationIcon } from "./icons";
 
 /** Scan → look up → one-tap confirm (or full form) → scan the next one. */
 export function BarcodeAdd({ onDone }: { onDone: () => void }) {
@@ -48,7 +50,7 @@ export function BarcodeAdd({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="stack">
-      {added.length > 0 && <div className="notice small">✔ Adicionados: {added.join(", ")}. Próximo:</div>}
+      {added.length > 0 && <div className="notice ok small">Adicionados: {added.join(", ")}. Próximo:</div>}
       <BarcodeScanner key={round} onCode={onCode} />
       {added.length > 0 && <button className="btn ghost block" onClick={onDone}>Concluir</button>}
     </div>
@@ -87,13 +89,13 @@ function QuickConfirm({ prefill, fromMemory, onAdded, onDetails }: {
 
   return (
     <div className="stack">
-      <div className="notice small">{fromMemory ? "✔ Produto que você já cadastrou." : "✔ Produto encontrado. Confira o nome."}</div>
+      <div className="notice ok small icon-label"><CircleCheck size={16} />{fromMemory ? "Produto que você já cadastrou." : "Produto encontrado. Confira o nome."}</div>
       <input type="text" value={name} onChange={(e) => setName(e.target.value)} aria-label="Nome" style={{ fontWeight: 600 }} />
       {prefill.notes && <div className="small muted" style={{ marginTop: -4 }}>{prefill.notes}</div>}
       <div className="row">
-        <button className="btn" aria-label="Menos" onClick={() => setQty((q) => Math.max(1, q - 1))} style={{ minWidth: 48 }}>−</button>
+        <button className="btn" aria-label="Menos" onClick={() => setQty((q) => Math.max(1, q - 1))} style={{ minWidth: 48 }}><Minus size={18} /></button>
         <b style={{ minWidth: 40, textAlign: "center", fontSize: "1.2rem" }}>{qty}</b>
-        <button className="btn" aria-label="Mais" onClick={() => setQty((q) => q + 1)} style={{ minWidth: 48 }}>+</button>
+        <button className="btn" aria-label="Mais" onClick={() => setQty((q) => q + 1)} style={{ minWidth: 48 }}><Plus size={18} /></button>
         <select value={unit} onChange={(e) => setUnit(e.target.value)} aria-label="Unidade" style={{ width: "auto", flex: 1 }}>
           {UNITS.map((u) => <option key={u}>{u}</option>)}
         </select>
@@ -104,7 +106,7 @@ function QuickConfirm({ prefill, fromMemory, onAdded, onDetails }: {
             onClick={() => {
               setLocation(l.value);
               if (!expiryTouched) setExpiry(addDays(today(), suggestShelfLifeDays(name, category, l.value)));
-            }}>{l.icon} {l.label}</button>
+            }}><LocationIcon location={l.value} />{l.label}</button>
         ))}
       </div>
       <label className="field">

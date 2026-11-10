@@ -11,6 +11,10 @@ android {
         versionCode = (System.getenv("APK_VERSION_CODE") ?: "1").toInteger()
         versionName = System.getenv("APK_VERSION_NAME") ?: "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        // Real phones are ARM; leaving out x86 (emulators) keeps the APK small.
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a"
+        }
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
@@ -38,6 +42,16 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+}
+
+// The app only reads Latin script (Portuguese labels). The text-recognition
+// plugin also pulls Chinese/Japanese/Korean/Devanagari models (~10 MB each per
+// ABI); they are never used, so they're left out of the APK.
+configurations.configureEach {
+    exclude group: "com.google.mlkit", module: "text-recognition-chinese"
+    exclude group: "com.google.mlkit", module: "text-recognition-japanese"
+    exclude group: "com.google.mlkit", module: "text-recognition-korean"
+    exclude group: "com.google.mlkit", module: "text-recognition-devanagari"
 }
 
 repositories {

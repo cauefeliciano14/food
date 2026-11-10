@@ -149,6 +149,17 @@ const ALIASES: Record<string, string> = {
   // Head words of processed products — present so that e.g. "SUCO DE LARANJA"
   // is not treated as laranja, nor "MOLHO DE ALHO" as alho.
   molho: "molho",
+  cafe: "cafe",
+  mel: "mel",
+  fuba: "fuba",
+  polvilho: "polvilho",
+  lentilha: "lentilha",
+  maionese: "maionese",
+  ketchup: "ketchup",
+  catchup: "ketchup",
+  mostarda: "mostarda",
+  fermento: "fermento",
+  vinagre: "vinagre",
   suco: "suco",
   bolo: "bolo",
   biscoito: "biscoito",

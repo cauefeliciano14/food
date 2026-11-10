@@ -41,6 +41,19 @@ const BY_ITEM: Record<string, number> = {
   molhodetomate: 365,
   arroz: 365,
   feijao: 365,
+  acucar: 730,
+  sal: 1095,
+  cafe: 180,
+  achocolatado: 365,
+  chocolate: 180,
+  aveia: 270,
+  biscoito: 120,
+  oleo: 365,
+  azeite: 540,
+  atum: 1095,
+  sardinha: 1095,
+  milho: 730,
+  ervilha: 730,
   macarrao: 365,
   farinha: 180,
   pao: 4,
@@ -50,7 +63,9 @@ const BY_ITEM: Record<string, number> = {
   presunto: 5,
 };
 
-export function suggestShelfLifeDays(name: string, category: Category, location: Location): number {
+export function suggestShelfLifeDays(name: string, category: Category, loc: Location): number {
+  // A kitchen cabinet behaves like the pantry.
+  const location: Location = loc === "armario" ? "despensa" : loc;
   if (location === "freezer") {
     return BY_CATEGORY[category].freezer ?? 90;
   }

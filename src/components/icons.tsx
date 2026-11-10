@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import {
-  Archive, Beef, CakeSlice, Carrot, ChefHat, Cookie, CookingPot, Croissant, CupSoda, Drumstick, Egg, Fish, Flame, Milk,
+  Archive, Beef, CakeSlice, Carrot, ChefHat, DoorClosed, Cookie, CookingPot, Croissant, CupSoda, Drumstick, Egg, Fish, Flame, Milk,
   Moon, Package, Refrigerator, Salad, Sandwich, Snowflake, Soup, Sun, Utensils, Wheat, type LucideIcon,
 } from "lucide-react";
 import type { Category, Location, MealSlot, Recipe } from "../lib/types";
@@ -38,7 +38,7 @@ export function CategoryIcon({ category, size }: { category: Category; size?: nu
   return <IconTile icon={c.icon} hue={c.hue} size={size} />;
 }
 
-const LOCATION: Record<Location, LucideIcon> = { geladeira: Refrigerator, freezer: Snowflake, despensa: Archive };
+const LOCATION: Record<Location, LucideIcon> = { geladeira: Refrigerator, freezer: Snowflake, despensa: Archive, armario: DoorClosed };
 
 export function LocationIcon({ location, size = 14 }: { location: Location; size?: number }) {
   const Icon = LOCATION[location] ?? Archive;

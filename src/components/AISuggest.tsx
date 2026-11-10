@@ -2,9 +2,10 @@ import { useState } from "react";
 import { db } from "../lib/db";
 import type { GeneratedRecipe } from "../lib/ai";
 import { loadSettings } from "../lib/settings";
-import { daysBetween, expiryStatus, today } from "../lib/dates";
+import { today } from "../lib/dates";
 import { ingredientsToText } from "./RecipeForm";
 import { Sparkles } from "lucide-react";
+import { daysLeft, isUsable } from "../lib/freshness";
 
 export function AISuggest({ onSaved, onNeedKey }: { onSaved: (id: number) => void; onNeedKey: () => void }) {
   const [wish, setWish] = useState("");
@@ -28,11 +29,11 @@ export function AISuggest({ onSaved, onNeedKey }: { onSaved: (id: number) => voi
     setResult(null);
     try {
       const ref = today();
-      const items = (await db.items.toArray()).filter((i) => expiryStatus(i.expiryDate, ref) !== "vencido");
+      const items = (await db.items.toArray()).filter((i) => isUsable(i, ref));
       const { suggestRecipe } = await import("../lib/ai");
       const r = await suggestRecipe(
         apiKey,
-        items.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit, location: i.location, expiresInDays: i.expiryDate ? daysBetween(ref, i.expiryDate) : null })),
+        items.map((i) => ({ name: i.name, quantity: i.quantity, unit: i.unit, location: i.location, expiresInDays: daysLeft(i, ref) })),
         wish.trim(),
       );
       setResult(r);

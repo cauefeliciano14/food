@@ -4,17 +4,22 @@ import { categoryInfo, locationInfo } from "../lib/types";
 import { formatBR } from "../lib/dates";
 import { consumeItem } from "../lib/db";
 import { addToShopping } from "../lib/shopping";
-import { ExpiryBadge, fmtQty } from "./ItemRow";
+import { ItemBadge, fmtQty } from "./ItemRow";
+import { OpenItem } from "./OpenItem";
+import { freshnessNote } from "../lib/freshness";
 import { ItemForm } from "./ItemForm";
-import { Check, Pencil, ShoppingCart, Trash2 } from "lucide-react";
+import { Check, Info, PackageOpen, Pencil, ShoppingCart, Split, Trash2 } from "lucide-react";
 import { CategoryIcon, LocationIcon } from "./icons";
 
 export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => void }) {
   const [editing, setEditing] = useState(false);
+  const [opening, setOpening] = useState(false);
   const [listed, setListed] = useState(false);
   const [amount, setAmount] = useState(String(item.unit === "un" || item.unit === "lata" ? 1 : item.quantity));
 
   if (editing) return <ItemForm item={item} onDone={onDone} />;
+  if (opening) return <OpenItem item={item} onDone={onDone} onCancel={() => setOpening(false)} />;
+  const note = freshnessNote(item);
 
   const n = Math.max(0, Number(amount.replace(",", ".")) || 0);
   const act = async (action: "consumido" | "descartado", all = false) => {
@@ -32,8 +37,10 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
         <div className="row wrap small">
           <span className="muted">Comprado: {formatBR(item.purchaseDate)}</span>
           <span className="muted">Validade: {formatBR(item.expiryDate)}</span>
-          <ExpiryBadge date={item.expiryDate} />
+          {item.openedAt && <span className="muted icon-label"><PackageOpen size={14} />Aberto: {formatBR(item.openedAt)}</span>}
+          <ItemBadge item={item} />
         </div>
+        {note && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Info size={14} style={{ marginTop: 3 }} /><span>{note}</span></div>}
         {item.notes && <div className="small">{item.notes}</div>}
       </div>
 
@@ -45,6 +52,9 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
         <button className="btn primary" onClick={() => act("consumido")} disabled={n <= 0}><Check size={18} />Usei</button>
         <button className="btn" onClick={() => act("consumido", true)}>Acabou tudo</button>
       </div>
+      <button className="btn block" onClick={() => setOpening(true)}>
+        {item.openedAt ? <><Split size={18} />Separar em outro pote</> : <><PackageOpen size={18} />Abri a embalagem</>}
+      </button>
       <button className="btn danger block" onClick={() => act("descartado", true)}><Trash2 size={18} />Joguei fora (estragou)</button>
       <button className="btn block" disabled={listed} onClick={async () => { await addToShopping(item.name); setListed(true); }}>
         {listed ? <><Check size={18} />Está na lista de compras</> : <><ShoppingCart size={18} />Pôr na lista de compras</>}

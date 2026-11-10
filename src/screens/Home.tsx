@@ -1,13 +1,14 @@
 import { useMemo } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "../lib/db";
-import { daysBetween, expiryStatus, today } from "../lib/dates";
+import { today } from "../lib/dates";
 import { rankRecipes } from "../lib/matching";
 import type { FoodItem, Recipe } from "../lib/types";
 import { ItemRow } from "../components/ItemRow";
 import { RecipeCard } from "../components/RecipeCard";
 import { IconTile } from "../components/icons";
 import { ChartColumn, ChevronRight, CircleCheck, Moon, Plus, Settings, Sun, TriangleAlert } from "lucide-react";
+import { daysLeft, effectiveDate, itemStatus } from "../lib/freshness";
 
 export function Home({ go, openItem, openRecipe, openSettings, openWaste }: {
   openSettings: () => void;
@@ -26,10 +27,10 @@ export function Home({ go, openItem, openRecipe, openSettings, openWaste }: {
   }, []) ?? [];
 
   const ref = today();
-  const expired = items.filter((i) => expiryStatus(i.expiryDate, ref) === "vencido");
+  const expired = items.filter((i) => itemStatus(i, ref) === "vencido");
   const soon = items
-    .filter((i) => i.expiryDate && daysBetween(ref, i.expiryDate) >= 0 && daysBetween(ref, i.expiryDate) <= 3)
-    .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
+    .filter((i) => { const d = daysLeft(i, ref); return d != null && d >= 0 && d <= 3; })
+    .sort((a, b) => effectiveDate(a).localeCompare(effectiveDate(b)));
 
   const suggestions = useMemo(
     () => rankRecipes(recipes, items, ref).filter((m) => m.canMake || m.missing.length <= 1).slice(0, 6),

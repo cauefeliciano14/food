@@ -1,15 +1,21 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Check, PackageOpen, Trash2 } from "lucide-react";
 import type { FoodItem } from "../lib/types";
 import { locationInfo } from "../lib/types";
 import { daysBetween, expiryLabel, expiryStatus, today } from "../lib/dates";
 import { consumeItem, quickUseAmount } from "../lib/db";
 import { useToast } from "../lib/toast";
 import { CategoryIcon, LocationIcon } from "./icons";
+import { effectiveDate, itemLabel, itemStatus } from "../lib/freshness";
 
 export function ExpiryBadge({ date }: { date: string }) {
   const st = expiryStatus(date);
   return <span className={`badge ${st}`}>{expiryLabel(date)}</span>;
+}
+
+/** Badge that knows about opened packages and "best before" tolerance. */
+export function ItemBadge({ item }: { item: FoodItem }) {
+  return <span className={`badge ${itemStatus(item)}`}>{itemLabel(item)}</span>;
 }
 
 export function fmtQty(q: number, unit: string) {
@@ -18,15 +24,17 @@ export function fmtQty(q: number, unit: string) {
 }
 
 /** Share of the item's shelf life still ahead (0..1), from purchase to expiry. */
-export function freshness(item: Pick<FoodItem, "purchaseDate" | "expiryDate">, ref = today()): number | null {
-  if (!item.expiryDate) return null;
-  const total = Math.max(1, daysBetween(item.purchaseDate || ref, item.expiryDate));
-  const left = daysBetween(ref, item.expiryDate);
+export function freshness(item: FoodItem, ref = today()): number | null {
+  const end = effectiveDate(item);
+  if (!end) return null;
+  const start = item.openedAt || item.purchaseDate || ref;
+  const total = Math.max(1, daysBetween(start, end));
+  const left = daysBetween(ref, end);
   return Math.max(0, Math.min(1, left / total));
 }
 
 export function ItemRow({ item, onClick, swipe = false }: { item: FoodItem; onClick?: () => void; swipe?: boolean }) {
-  const st = expiryStatus(item.expiryDate);
+  const st = itemStatus(item);
   const f = freshness(item);
   const row = (
     <div className="item" onClick={onClick} role={onClick ? "button" : undefined}>
@@ -36,9 +44,10 @@ export function ItemRow({ item, onClick, swipe = false }: { item: FoodItem; onCl
         <div className="meta">
           <span>{fmtQty(item.quantity, item.unit)}</span>·<LocationIcon location={item.location} />
           <span>{locationInfo(item.location).label}</span>
+          {item.openedAt && <><span>·</span><PackageOpen size={14} aria-label="Aberto" /></>}
         </div>
       </div>
-      <ExpiryBadge date={item.expiryDate} />
+      <ItemBadge item={item} />
       {f != null && <div className={`fresh ${st}`} aria-hidden="true"><i style={{ width: `${Math.max(4, f * 100)}%` }} /></div>}
     </div>
   );

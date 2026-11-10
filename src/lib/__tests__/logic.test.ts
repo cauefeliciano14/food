@@ -248,3 +248,136 @@ describe("default location", () => {
     expect(defaultLocation("carnes")).toBe("geladeira");
   });
 });
+
+import { effectiveDate, isUsable, itemLabel, itemStatus, locationAfterOpening } from "../freshness";
+
+describe("freshness rules", () => {
+  const it2 = (name: string, category: FoodItem["category"], expiryDate: string, extra: Partial<FoodItem> = {}) =>
+    item(name, expiryDate, { category, location: "despensa", ...extra });
+  it("sealed dry goods past the date are 'passou', not expired", () => {
+    const arroz = it2("Arroz", "graos", "2026-10-01");
+    expect(itemStatus(arroz, REF)).toBe("passou");
+    expect(itemLabel(arroz, REF)).toBe("passou há 39 dias");
+    expect(isUsable(arroz, REF)).toBe(true);
+    expect(itemStatus(it2("Açúcar refinado", "temperos", "2024-01-01"), REF)).toBe("passou");
+  });
+  it("fresh food past the date is expired", () => {
+    expect(itemStatus(it2("Peito de frango", "carnes", "2026-11-08"), REF)).toBe("vencido");
+    expect(itemStatus(it2("Iogurte", "laticinios", "2026-11-08"), REF)).toBe("vencido");
+    expect(itemStatus(it2("Arroz", "graos", "2025-01-01"), REF)).toBe("vencido"); // beyond tolerance
+  });
+  it("opened packages follow the after-opening rule", () => {
+    const leite = it2("Leite integral", "laticinios", "2027-03-01", { openedAt: "2026-11-08", location: "geladeira" });
+    expect(effectiveDate(leite)).toBe("2026-11-11");
+    expect(itemLabel(leite, REF)).toBe("use em 2 dias");
+    const cond = it2("Leite condensado", "laticinios", "2027-06-01", { openedAt: "2026-11-01" });
+    expect(itemStatus(cond, REF)).toBe("vencido"); // opened 8 days ago, keeps 5
+    const arrozAberto = it2("Arroz", "graos", "2027-06-01", { openedAt: "2026-11-01" });
+    expect(itemStatus(arrozAberto, REF)).toBe("ok");
+    // never later than the printed date
+    expect(effectiveDate(it2("Arroz", "graos", "2026-12-01", { openedAt: "2026-11-09" }))).toBe("2026-12-01");
+  });
+  it("suggests the fridge after opening when needed", () => {
+    expect(locationAfterOpening({ name: "Creme de leite", category: "laticinios", location: "despensa" })).toBe("geladeira");
+    expect(locationAfterOpening({ name: "Arroz", category: "graos", location: "despensa" })).toBe("despensa");
+  });
+});
+
+import { parseExpiryFromText } from "../expiryOcr";
+
+describe("expiry date OCR parsing", () => {
+  it.each([
+    ["VAL: 12/03/2027", "2027-03-12"],
+    ["VAL.12/03/27 L:2310A", "2027-03-12"],
+    ["FAB 01/01/2026 VAL 01/07/2027", "2027-07-01"],
+    ["VAL 01/07/2027\nFAB 01/01/2026", "2027-07-01"],
+    ["VENC 12.03.2027", "2027-03-12"],
+    ["V: 12-03-27", "2027-03-12"],
+    ["12 MAR 2027", "2027-03-12"],
+    ["VAL 12MAR27", "2027-03-12"],
+    ["VAL: MAR/2027", "2027-03-31"],
+    ["VALIDADE 02/2027 LOTE 4455", "2027-02-28"],
+    ["VAL 1O/O3/2O27", "2027-03-10"],
+    ["CONSUMIR ATÉ 05 DEZ 2026", "2026-12-05"],
+    ["L 2405 15/08/26 14:32", "2026-08-15"],
+  ])("%s → %s", (text, expected) => {
+    expect(parseExpiryFromText(text, "2026-11-09").best).toBe(expected);
+  });
+  it("prefers the expiry over manufacture without labels (later date)", () => {
+    expect(parseExpiryFromText("01/01/2026 01/07/2027", "2026-11-09").best).toBe("2027-07-01");
+  });
+  it("returns nothing for text without dates", () => {
+    expect(parseExpiryFromText("ARROZ TIPO 1 5KG", "2026-11-09")).toEqual({ best: null, candidates: [] });
+  });
+});
+
+import { parseClaudeReply, parseIngredientLine, parseRecipeText } from "../recipeOcr";
+
+describe("recipe from photo text", () => {
+  it.each([
+    ["2 xícaras (chá) de farinha de trigo", { name: "farinha de trigo", amount: "2 xícaras (chá)" }],
+    ["1 lata de leite condensado", { name: "leite condensado", amount: "1 lata" }],
+    ["3 ovos", { name: "ovos", amount: "3" }],
+    ["• 1/2 xícara de óleo", { name: "óleo", amount: "1/2 xícara" }],
+    ["Sal a gosto", { name: "sal", amount: "a gosto" }],
+    ["1 colher (sopa) de fermento em pó", { name: "fermento em pó", amount: "1 colher (sopa)" }],
+    ["2 dentes de alho picados", { name: "alho picados", amount: "2 dentes" }],
+    ["Cheiro-verde picado (opcional)", { name: "cheiro-verde picado", optional: true }],
+    ["500 g de carne moída", { name: "carne moída", amount: "500 g" }],
+  ])("%s", (line, expected) => {
+    expect(parseIngredientLine(line)).toEqual(expected);
+  });
+
+  it("parses a typical cookbook page", () => {
+    const page = `BOLO DE CENOURA
+Rende: 12 porções
+Tempo de preparo: 50 minutos
+Ingredientes
+Massa
+3 cenouras médias
+4 ovos
+1 xícara (chá) de óleo
+2 xícaras (chá) de açúcar
+2 xícaras (chá) de farinha de
+trigo
+1 colher (sopa) de fermento
+Cobertura
+1 colher (sopa) de manteiga
+Modo de preparo
+1. Bata no liquidificador as cenouras, os ovos e o óleo.
+2. Em uma tigela, misture o açúcar e a farinha. Junte o creme
+batido e mexa bem.
+3. Por último, acrescente o fermento.
+4. Asse em forno médio por 40 minutos.
+32`;
+    const r = parseRecipeText(page);
+    expect(r.title).toBe("Bolo de cenoura");
+    expect(r.servings).toBe(12);
+    expect(r.minutes).toBe(50);
+    expect(r.ingredients.map((i) => i.name)).toEqual(["cenouras médias", "ovos", "óleo", "açúcar", "farinha de trigo", "fermento", "manteiga"]);
+    expect(r.steps).toHaveLength(4);
+    expect(r.steps[1]).toBe("Em uma tigela, misture o açúcar e a farinha. Junte o creme batido e mexa bem.");
+  });
+
+  it("splits prose instructions into sentences", () => {
+    const r = parseRecipeText("Arroz simples\nIngredientes\n2 xícaras de arroz\nModo de fazer\nRefogue o alho no óleo. Junte o arroz e frite.\nAcrescente a água e cozinhe até secar.");
+    expect(r.steps).toEqual(["Refogue o alho no óleo.", "Junte o arroz e frite.", "Acrescente a água e cozinhe até secar."]);
+  });
+
+  it("reads the Claude app reply (JSON in a code block)", () => {
+    const reply = 'Claro! Aqui está:\n```json\n{"title":"Pudim","minutes":60,"servings":8,"ingredients":[{"name":"leite condensado","amount":"1 lata"},{"name":"ovo","amount":"3","optional":false}],"steps":["Bata tudo.","Asse em banho-maria."],"tags":["doce"]}\n```';
+    const r = parseClaudeReply(reply);
+    expect(r).toEqual({
+      title: "Pudim", minutes: 60, servings: 8,
+      ingredients: [{ name: "leite condensado", amount: "1 lata" }, { name: "ovo", amount: "3" }],
+      steps: ["Bata tudo.", "Asse em banho-maria."], tags: ["doce"],
+    });
+  });
+
+  it("falls back to text when the reply isn't JSON", () => {
+    const r = parseClaudeReply("Pudim\nIngredientes\n1 lata de leite condensado\nModo de preparo\n1. Bata.\n2. Asse.");
+    expect(r.title).toBe("Pudim");
+    expect(r.ingredients[0]).toEqual({ name: "leite condensado", amount: "1 lata" });
+    expect(r.steps).toEqual(["Bata.", "Asse."]);
+  });
+});

@@ -11,6 +11,10 @@ App pessoal para controlar a comida de casa e parar de desperdiçar:
 - **Código de barras** — aponte a câmera para a embalagem; o app busca o produto no Open Food Facts (base gratuita) e preenche nome e categoria. Da segunda vez, ele lembra sozinho (funciona offline). "Adicionar e ler outro" agiliza guardar as compras.
 - **Cardápio da semana** — em Receitas → Semana, escolha almoço/jantar de cada dia ou toque em "Preencher vazios" (prioriza o que você já tem e o que vence antes). "Lista da semana" põe na lista de compras o que falta — conferindo a validade no dia de cada refeição.
 - **Desperdício** — na tela inicial, "ver desperdício": aproveitado × jogado fora nos últimos 6 meses, quanto custou (quando o item tem preço — vem da foto da nota) e o que mais estraga, com dicas.
+- **Validade inteligente** — o app sabe que arroz, açúcar, sal e enlatados fechados costumam durar além da data impressa ("passou da data — confira") e que carne, leite e iogurte não; e que depois de aberto cada coisa dura um prazo diferente (leite 3 dias, arroz meses).
+- **Aberto e pote** — "Abri a embalagem" passa a contar a validade de aberto e sugere a geladeira quando precisa; "Separei uma parte em outro pote" divide o item (ex.: 1 kg num pote no armário, 4 kg no saco na despensa).
+- **Foto da validade** — no app Android, "Ler validade pela foto" lê a data impressa na embalagem (VAL/VENC, dd/mm/aa, "12 MAR 2027", "03/2027"…), sem internet e sem custo.
+- **Receita por foto** — fotografe uma ou mais páginas do livro e o app separa título, ingredientes e modo de preparo (no aparelho, grátis). Ou envie as fotos para o seu app do Claude com as instruções prontas e cole a resposta de volta — usa a sua assinatura, sem chave de API.
 - **Gestos** — na despensa, deslize um item para a direita quando usar (tira 1 unidade, ou tudo se for por peso) e para a esquerda se jogou fora; dá para desfazer.
 - **Modo escuro** — Ajustes → Aparência: Automático (segue o celular), Claro ou Escuro.
 - **"Cozinhei"** — ao fazer uma receita, marca o que acabou e o app tira da despensa.

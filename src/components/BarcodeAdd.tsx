@@ -8,6 +8,7 @@ import { suggestShelfLifeDays } from "../lib/shelfLife";
 import { LOCATIONS, UNITS, type FoodItem, type Location } from "../lib/types";
 import { CircleCheck, Minus, Plus } from "lucide-react";
 import { LocationIcon } from "./icons";
+import { ExpiryPhoto } from "./ExpiryPhoto";
 
 /** Scan → look up → one-tap confirm (or full form) → scan the next one. */
 export function BarcodeAdd({ onDone }: { onDone: () => void }) {
@@ -100,7 +101,7 @@ function QuickConfirm({ prefill, fromMemory, onAdded, onDetails }: {
           {UNITS.map((u) => <option key={u}>{u}</option>)}
         </select>
       </div>
-      <div className="segmented" role="radiogroup" aria-label="Onde fica">
+      <div className="segmented locs" role="radiogroup" aria-label="Onde fica">
         {LOCATIONS.map((l) => (
           <button key={l.value} role="radio" aria-checked={location === l.value} className={location === l.value ? "active" : ""}
             onClick={() => {
@@ -113,6 +114,7 @@ function QuickConfirm({ prefill, fromMemory, onAdded, onDetails }: {
         <span>Validade {expiryTouched ? "" : "(sugestão — confira na embalagem)"}</span>
         <input type="date" value={expiry} onChange={(e) => { setExpiry(e.target.value); setExpiryTouched(true); }} />
       </label>
+      <ExpiryPhoto onDate={(d) => { setExpiry(d); setExpiryTouched(true); }} />
       <button className="btn primary block" style={{ minHeight: 52 }} onClick={() => save(true)} disabled={!name.trim()}>Adicionar e ler o próximo</button>
       <div className="grid-2">
         <button className="btn" onClick={() => save(false)} disabled={!name.trim()}>Adicionar e fechar</button>

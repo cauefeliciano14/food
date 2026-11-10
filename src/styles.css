@@ -158,6 +158,7 @@ textarea { min-height: 90px; resize: vertical; }
 .badge.vencido, .badge.hoje { background: var(--danger-soft); color: var(--danger); }
 .badge.urgente { background: var(--warn-soft); color: var(--warn); }
 .badge.breve { background: var(--info-soft); color: var(--text); }
+.badge.passou { background: var(--info-soft); color: var(--chart-used); }
 .badge.ok { background: var(--primary-soft); color: var(--primary); }
 .badge.sem-data { background: var(--surface-2); color: var(--muted); }
 
@@ -184,6 +185,7 @@ button.item, .item[role="button"] { cursor: pointer; text-align: left; width: 10
 .fresh.breve > i { background: var(--chart-used); }
 .fresh.urgente > i, .fresh.hoje > i { background: var(--warn); }
 .fresh.vencido > i { background: var(--danger); width: 100% !important; }
+.fresh.passou > i { background: var(--chart-used); width: 100% !important; opacity: 0.6; }
 
 /* swipe actions */
 .swipe { position: relative; border-radius: var(--radius); overflow: hidden; transition: height 0.22s ease, opacity 0.22s ease, margin 0.22s ease; }
@@ -354,3 +356,13 @@ input[type="checkbox"] { accent-color: var(--primary); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* recipe photo pages */
+.pages { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.page-thumb { position: relative; flex: 0 0 84px; height: 112px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); }
+.page-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.page-n { position: absolute; left: 6px; bottom: 6px; background: var(--surface); border-radius: 99px; font-size: 0.72rem; font-weight: 800; padding: 1px 7px; }
+.page-x { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; border-radius: 50%; border: none; background: rgb(0 0 0 / 55%); color: #fff; display: grid; place-items: center; cursor: pointer; padding: 0; }
+
+/* 4 storage places: 2×2 so they fit narrow phones */
+.segmented.locs { grid-auto-flow: row; grid-template-columns: 1fr 1fr; }

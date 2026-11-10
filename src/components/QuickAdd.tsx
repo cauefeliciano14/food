@@ -32,7 +32,7 @@ function enrich(name: string, quantity: number, unit: string, pantry: FoodItem[]
   };
 }
 
-const NEXT_LOCATION: Record<Location, Location> = { geladeira: "freezer", freezer: "despensa", despensa: "geladeira" };
+const NEXT_LOCATION: Record<Location, Location> = { geladeira: "freezer", freezer: "despensa", despensa: "armario", armario: "geladeira" };
 
 export function QuickAdd({ onAdded }: { onAdded: (count: number) => void }) {
   const [text, setText] = useState("");

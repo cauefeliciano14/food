@@ -1,5 +1,6 @@
 import { db } from "./db";
-import { daysBetween, today } from "./dates";
+import { today } from "./dates";
+import { daysLeft, effectiveDate, itemStatus } from "./freshness";
 import { loadSettings } from "./settings";
 
 const KEY = "despensa:lastNotified";
@@ -16,8 +17,8 @@ export async function notifyExpiringOncePerDay() {
   const { notifyDays } = loadSettings();
   const items = await db.items.toArray();
   const soon = items
-    .filter((i) => i.expiryDate && daysBetween(ref, i.expiryDate) <= notifyDays)
-    .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate));
+    .filter((i) => { const d = daysLeft(i, ref); return d != null && d <= notifyDays && itemStatus(i, ref) !== "passou"; })
+    .sort((a, b) => effectiveDate(a).localeCompare(effectiveDate(b)));
   try {
     localStorage.setItem(KEY, ref);
   } catch {

@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from "dexie";
-import type { BarcodeInfo, FoodItem, HistoryEntry, MealPlanEntry, Recipe, ShoppingItem } from "./types";
+import type { BarcodeInfo, FoodItem, Location, HistoryEntry, MealPlanEntry, Recipe, ShoppingItem } from "./types";
 import { SEED_RECIPES } from "./seedRecipes";
 import { today } from "./dates";
 
@@ -63,6 +63,36 @@ export async function consumeItem(item: FoodItem, amount: number, action: "consu
       if (historyId != null) await db.history.delete(historyId);
     });
   };
+}
+
+/**
+ * Mark a package as opened and, optionally, move part of it to another
+ * container (e.g. 1 kg of a 5 kg rice bag into a jar in the kitchen cabinet).
+ * Both parts count as opened from `openedAt`.
+ */
+export async function openItem(
+  item: FoodItem,
+  opts: { openedAt: string; location: Location; split?: { quantity: number; location: Location; name: string } },
+) {
+  if (item.id == null) return;
+  await db.transaction("rw", db.items, async () => {
+    const part = opts.split && opts.split.quantity > 0 ? Math.min(opts.split.quantity, item.quantity) : 0;
+    const rest = +(item.quantity - part).toFixed(3);
+    if (part > 0) {
+      await db.items.add({
+        ...item,
+        id: undefined,
+        name: opts.split!.name.trim() || item.name,
+        quantity: part,
+        location: opts.split!.location,
+        openedAt: item.openedAt ?? opts.openedAt,
+        notes: `Separado de ${item.name}${item.notes ? ` · ${item.notes}` : ""}`,
+        createdAt: Date.now(),
+      });
+    }
+    if (rest <= 0) await db.items.delete(item.id!);
+    else await db.items.update(item.id!, { quantity: rest, location: opts.location, openedAt: item.openedAt ?? opts.openedAt });
+  });
 }
 
 /** Units you count one by one — a quick "usei" takes one of these, not the whole lot. */

@@ -1,6 +1,7 @@
 import type { FoodItem, Recipe } from "./types";
-import { expiryStatus, daysBetween, today } from "./dates";
+import { today } from "./dates";
 import { isStaple, itemMatchesIngredient } from "./normalize";
+import { daysLeft, isUsable, itemStatus } from "./freshness";
 
 export interface IngredientMatch {
   name: string;
@@ -25,7 +26,7 @@ export interface RecipeMatch {
 }
 
 function usable(item: FoodItem, ref: string): boolean {
-  return item.quantity > 0 && expiryStatus(item.expiryDate, ref) !== "vencido";
+  return isUsable(item, ref);
 }
 
 export function matchRecipe(recipe: Recipe, pantry: FoodItem[], ref: string = today()): RecipeMatch {
@@ -44,7 +45,8 @@ export function matchRecipe(recipe: Recipe, pantry: FoodItem[], ref: string = to
   const expiringUsed = new Map<number | string, FoodItem>();
   for (const ing of ingredients) {
     for (const it of ing.items) {
-      if (it.expiryDate && daysBetween(ref, it.expiryDate) <= 7) {
+      const left = daysLeft(it, ref);
+      if (left != null && left <= 7 && itemStatus(it, ref) !== "passou") {
         expiringUsed.set(it.id ?? it.name, it);
       }
     }

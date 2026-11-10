@@ -3,10 +3,11 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { Clock, Package, Plus, Search, TriangleAlert, X } from "lucide-react";
 import { db } from "../lib/db";
 import { LOCATIONS, type FoodItem, type Location } from "../lib/types";
-import { daysBetween, expiryStatus, today } from "../lib/dates";
+import { today } from "../lib/dates";
 import { normalize } from "../lib/normalize";
 import { ItemRow } from "../components/ItemRow";
 import { EmptyState, LocationIcon } from "../components/icons";
+import { daysLeft, effectiveDate, itemStatus } from "../lib/freshness";
 
 type Filter = "todos" | Location | "vencendo" | "vencidos";
 type Sort = "validade" | "nome" | "compra";
@@ -15,7 +16,8 @@ const HINT_KEY = "despensa:swipeHintSeen";
 
 /** Urgency buckets, most urgent first. */
 const GROUPS: { key: string; title: string; test: (days: number | null) => boolean }[] = [
-  { key: "vencido", title: "Vencidos", test: (d) => d != null && d < 0 },
+  { key: "vencido", title: "Vencidos", test: () => false },
+  { key: "passou", title: "Passou da data — confira", test: () => false },
   { key: "hoje", title: "Vence hoje", test: (d) => d === 0 },
   { key: "semana", title: "Nos próximos 7 dias", test: (d) => d != null && d >= 1 && d <= 7 },
   { key: "mes", title: "Neste mês", test: (d) => d != null && d >= 8 && d <= 30 },
@@ -40,19 +42,23 @@ export function Pantry({ initialFilter, openItem, onAdd }: { initialFilter?: str
     .filter((i) => {
       if (nq && !normalize(i.name).includes(nq)) return false;
       if (filter === "todos") return true;
-      if (filter === "vencidos") return expiryStatus(i.expiryDate, ref) === "vencido";
-      if (filter === "vencendo") return !!i.expiryDate && daysBetween(ref, i.expiryDate) >= 0 && daysBetween(ref, i.expiryDate) <= 7;
+      if (filter === "vencidos") return itemStatus(i, ref) === "vencido";
+      if (filter === "vencendo") { const d = daysLeft(i, ref); return d != null && d >= 0 && d <= 7; }
       return i.location === filter;
     })
     .sort((a, b) => {
       if (sort === "nome") return a.name.localeCompare(b.name);
       if (sort === "compra") return b.purchaseDate.localeCompare(a.purchaseDate);
-      return (a.expiryDate || "9999").localeCompare(b.expiryDate || "9999");
+      return (effectiveDate(a) || "9999").localeCompare(effectiveDate(b) || "9999");
     });
 
   const groups = GROUPS.map((g) => ({
     ...g,
-    items: shown.filter((i) => g.test(i.expiryDate ? daysBetween(ref, i.expiryDate) : null)),
+    items: shown.filter((i) => {
+      const st = itemStatus(i, ref);
+      if (st === "vencido" || st === "passou") return g.key === st;
+      return g.key !== "vencido" && g.key !== "passou" && g.test(daysLeft(i, ref));
+    }),
   })).filter((g) => g.items.length > 0);
 
   const dismissHint = () => {

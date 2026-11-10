@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { BookOpen, FilePenLine, House, Package, Plus, ReceiptText, ScanBarcode, ShoppingCart, type LucideIcon } from "lucide-react";
+import { BookImage, BookOpen, ChevronRight, FilePenLine, House, Package, Plus, ReceiptText, ScanBarcode, ShoppingCart, type LucideIcon } from "lucide-react";
 import { useToast } from "./lib/toast";
+import { RecipeFromPhoto } from "./components/RecipeFromPhoto";
+import type { RecipeDraft } from "./lib/recipeOcr";
 import { IconTile } from "./components/icons";
 import type { FoodItem, Recipe } from "./lib/types";
 import { Home } from "./screens/Home";
@@ -30,6 +32,8 @@ type Modal =
   | { kind: "item"; item: FoodItem }
   | { kind: "recipe"; recipe: Recipe }
   | { kind: "recipe-new" }
+  | { kind: "recipe-photo" }
+  | { kind: "recipe-draft"; draft: RecipeDraft }
   | { kind: "ai" }
   | { kind: "barcode" }
   | { kind: "waste" }
@@ -110,7 +114,28 @@ export default function App() {
       )}
       {modal?.kind === "recipe-new" && (
         <Sheet title="Nova receita" onClose={close}>
-          <RecipeForm onDone={(id) => (id ? openRecipeById(id) : close())} />
+          <div className="stack">
+            <button className="item" onClick={() => setModal({ kind: "recipe-photo" })}>
+              <IconTile icon={BookImage} hue={25} />
+              <div className="body"><div className="title">Foto do livro de receitas</div><div className="meta">Tire foto da página e o app monta a receita</div></div>
+              <ChevronRight size={18} className="muted" />
+            </button>
+            <div className="divider">ou escreva</div>
+            <RecipeForm onDone={(id) => (id ? openRecipeById(id) : close())} />
+          </div>
+        </Sheet>
+      )}
+      {modal?.kind === "recipe-photo" && (
+        <Sheet title="Receita por foto" onClose={close}>
+          <RecipeFromPhoto onDraft={(draft) => setModal({ kind: "recipe-draft", draft })} />
+        </Sheet>
+      )}
+      {modal?.kind === "recipe-draft" && (
+        <Sheet title="Confira a receita" onClose={close}>
+          <div className="stack">
+            <div className="notice small">Confira o que foi lido e corrija antes de salvar.</div>
+            <RecipeForm initial={{ ...modal.draft, source: "minha" }} onDone={(id) => (id ? openRecipeById(id) : close())} />
+          </div>
         </Sheet>
       )}
       {modal?.kind === "barcode" && <Sheet title="Código de barras" onClose={close}><BarcodeAdd onDone={close} /></Sheet>}

@@ -29,7 +29,7 @@ export function daysBetween(from: string, to: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-export type ExpiryStatus = "vencido" | "hoje" | "urgente" | "breve" | "ok" | "sem-data";
+export type ExpiryStatus = "vencido" | "passou" | "hoje" | "urgente" | "breve" | "ok" | "sem-data";
 
 /** urgente: até 3 dias; breve: até 7 dias. */
 export function expiryStatus(expiryDate: string, ref: string = today()): ExpiryStatus {

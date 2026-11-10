@@ -1,4 +1,4 @@
-export type Location = "geladeira" | "freezer" | "despensa";
+export type Location = "geladeira" | "freezer" | "despensa" | "armario";
 
 export type Category =
   | "hortifruti"
@@ -26,6 +26,8 @@ export interface FoodItem {
   /** YYYY-MM-DD; empty string when unknown */
   expiryDate: string;
   notes?: string;
+  /** YYYY-MM-DD when the package was opened (validity then follows freshness rules) */
+  openedAt?: string;
   /** price paid per 1 `unit` (R$), when known — used to value waste */
   unitPrice?: number;
   barcode?: string;
@@ -107,6 +109,7 @@ export const LOCATIONS: { value: Location; label: string }[] = [
   { value: "geladeira", label: "Geladeira" },
   { value: "freezer", label: "Freezer" },
   { value: "despensa", label: "Despensa" },
+  { value: "armario", label: "Armário" },
 ];
 
 export const CATEGORIES: { value: Category; label: string }[] = [

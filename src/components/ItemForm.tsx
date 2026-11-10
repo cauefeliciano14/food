@@ -4,6 +4,7 @@ import { CATEGORIES, LOCATIONS, UNITS } from "../lib/types";
 import { addDays, today } from "../lib/dates";
 import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { db } from "../lib/db";
+import { ExpiryPhoto } from "./ExpiryPhoto";
 
 export function ItemForm({ item, initial, onDone, onNext }: {
   item?: FoodItem;
@@ -25,6 +26,8 @@ export function ItemForm({ item, initial, onDone, onNext }: {
   );
   const [expiryTouched, setExpiryTouched] = useState(!!item);
   const [notes, setNotes] = useState(base?.notes ?? "");
+  const [opened, setOpened] = useState(!!base?.openedAt);
+  const [openedAt, setOpenedAt] = useState(base?.openedAt ?? today());
   const [price, setPrice] = useState(base?.unitPrice ? String(base.unitPrice).replace(".", ",") : "");
   const next = useRef(false);
 
@@ -45,6 +48,7 @@ export function ItemForm({ item, initial, onDone, onNext }: {
       purchaseDate,
       expiryDate,
       notes: notes.trim() || undefined,
+      openedAt: opened ? openedAt || today() : undefined,
       unitPrice: Number(price.replace(",", ".")) > 0 ? +Number(price.replace(",", ".")).toFixed(2) : undefined,
     };
     if (!data.name) return;
@@ -123,6 +127,12 @@ export function ItemForm({ item, initial, onDone, onNext }: {
           <input type="date" value={expiryDate} onChange={(e) => { setExpiryDate(e.target.value); setExpiryTouched(true); }} />
         </label>
       </div>
+      <ExpiryPhoto onDate={(d) => { setExpiryDate(d); setExpiryTouched(true); }} />
+      <label className="row" style={{ cursor: "pointer", gap: 10 }}>
+        <input type="checkbox" checked={opened} onChange={(e) => setOpened(e.target.checked)} style={{ width: 22, height: 22 }} />
+        <span>Já está aberto</span>
+        {opened && <input type="date" value={openedAt} max={today()} onChange={(e) => setOpenedAt(e.target.value)} aria-label="Aberto em" style={{ marginLeft: "auto", width: "auto" }} />}
+      </label>
       <label className="field">
         <span>Preço por {unit} (R$, opcional — para calcular o desperdício)</span>
         <input type="text" inputMode="decimal" value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Ex.: 22,90" />

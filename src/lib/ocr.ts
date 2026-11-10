@@ -37,12 +37,19 @@ export interface OcrLine {
   /** vertical position, for keeping reading order across blocks */
   top: number;
   left: number;
+  /** line height in pixels — bigger letters usually mean the product name */
+  height: number;
 }
 
 export async function readText(uri: string): Promise<{ text: string; lines: OcrLine[] }> {
   const { TextRecognition, Script } = await import("@capacitor-mlkit/text-recognition");
   const r = await TextRecognition.processImage({ path: uri, script: Script.Latin });
   const lines: OcrLine[] = [];
-  for (const b of r.blocks) for (const l of b.lines) lines.push({ text: l.text, top: l.boundingBox?.top ?? 0, left: l.boundingBox?.left ?? 0 });
+  for (const b of r.blocks) for (const l of b.lines) lines.push({
+    text: l.text,
+    top: l.boundingBox?.top ?? 0,
+    left: l.boundingBox?.left ?? 0,
+    height: l.boundingBox ? l.boundingBox.bottom - l.boundingBox.top : 0,
+  });
   return { text: r.text, lines };
 }

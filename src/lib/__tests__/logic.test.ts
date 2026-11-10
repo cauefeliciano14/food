@@ -423,3 +423,33 @@ describe("barcode product names", () => {
     expect(productPrefill("Leite condensado Moça", ["Moça"], "395 g").notes).toBe("Embalagem: 395 g");
   });
 });
+
+import { productFromLabel } from "../productOcr";
+
+describe("product from a package photo", () => {
+  it("takes the biggest food text as name and reads the weight", () => {
+    const r = productFromLabel([
+      { text: "Saboroso", height: 40 },
+      { text: "ARROZ", height: 90 },
+      { text: "INTEGRAL", height: 80 },
+      { text: "TIPO 1", height: 30 },
+      { text: "PESO LÍQUIDO 5 kg", height: 18 },
+      { text: "INFORMAÇÃO NUTRICIONAL", height: 12 },
+      { text: "Indústria Brasileira", height: 10 },
+    ], "2026-11-10")!;
+    expect(r.rawName).toBe("ARROZ INTEGRAL");
+    expect(r.prefill).toMatchObject({ name: "Arroz integral", category: "graos", location: "despensa", quantity: 5, unit: "kg" });
+  });
+  it("keeps small packages by unit and uses a labelled expiry date", () => {
+    const r = productFromLabel([
+      { text: "Leite Condensado", height: 60 },
+      { text: "Mococa", height: 70 },
+      { text: "395g", height: 20 },
+      { text: "VAL 15/08/2027 L 2210", height: 10 },
+    ], "2026-11-10")!;
+    expect(r.prefill).toMatchObject({ name: "Leite condensado", quantity: 1, unit: "un", notes: "Embalagem: 395g", expiryDate: "2027-08-15" });
+  });
+  it("returns null when nothing looks like a name", () => {
+    expect(productFromLabel([{ text: "1234 5678", height: 30 }])).toBeNull();
+  });
+});

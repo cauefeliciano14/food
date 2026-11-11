@@ -3,7 +3,10 @@ import { useBack } from "../lib/back";
 import type { FoodItem } from "../lib/types";
 import { categoryInfo, locationInfo } from "../lib/types";
 import { formatBR } from "../lib/dates";
-import { consumeItem } from "../lib/db";
+import { consumeItem, db, moveItem } from "../lib/db";
+import { useLiveQuery } from "dexie-react-hooks";
+import { useToast } from "../lib/toast";
+import { LOCATIONS, type Location } from "../lib/types";
 import { addToShopping } from "../lib/shopping";
 import { ItemBadge, fmtQty } from "./ItemRow";
 import { OpenItem } from "./OpenItem";
@@ -12,7 +15,10 @@ import { ItemForm } from "./ItemForm";
 import { Check, Info, PackageOpen, Pencil, ShoppingCart, Sparkles, Split, Trash2 } from "lucide-react";
 import { CategoryIcon, LocationIcon } from "./icons";
 
-export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => void }) {
+export function ItemDetail({ item: initial, onDone }: { item: FoodItem; onDone: () => void }) {
+  // follow changes made from this screen (e.g. moving it to the freezer)
+  const item = useLiveQuery(() => db.items.get(initial.id!), [initial.id]) ?? initial;
+  const showToast = useToast();
   const [editing, setEditing] = useState(false);
   const [opening, setOpening] = useState(false);
   const [listed, setListed] = useState(false);
@@ -46,6 +52,23 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
         {item.fullName && item.fullName !== item.name && <div className="small"><span className="muted">Nome original: </span>{item.fullName}</div>}
         {item.notes && <div className="small">{item.notes}</div>}
         {item.tip && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Sparkles size={14} style={{ marginTop: 3 }} aria-label="Dica da IA" /><span>{item.tip}</span></div>}
+      </div>
+
+      <div className="stack" style={{ gap: 6 }}>
+        <span className="small muted">Onde está (toque para mover)</span>
+        <div className="segmented locs" role="radiogroup" aria-label="Onde está">
+          {LOCATIONS.map((l) => (
+            <button key={l.value} role="radio" aria-checked={item.location === l.value} className={item.location === l.value ? "active" : ""}
+              onClick={async () => {
+                if (item.location === l.value) return;
+                const r = await moveItem(item, l.value as Location);
+                showToast(
+                  `${item.name} → ${l.label}${r.expiryDate !== item.expiryDate ? ` · validade ${r.expiryDate ? formatBR(r.expiryDate) : "sem data"}` : ""}`,
+                  r.undo,
+                );
+              }}><LocationIcon location={l.value} />{l.label}</button>
+          ))}
+        </div>
       </div>
 
       <label className="field">

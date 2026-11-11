@@ -4,7 +4,8 @@ import { SEED_RECIPES } from "./seedRecipes";
 import { SEED_RECIPES_2 } from "./seedRecipes2";
 import { SEED_RECIPES_3 } from "./seedRecipes3";
 import { normalize } from "./normalize";
-import { today } from "./dates";
+import { addDays, today } from "./dates";
+import { suggestShelfLifeDays } from "./shelfLife";
 import { productPrefill } from "./barcode";
 
 export class DespensaDB extends Dexie {
@@ -176,4 +177,34 @@ export async function importBackup(data: Backup) {
     await db.recipes.bulkAdd(data.recipes ?? []);
     await db.history.bulkAdd(data.history ?? []);
   });
+}
+
+
+/** Fresh foods whose shelf life changes a lot with freezing / thawing. */
+const FREEZABLE = new Set(["carnes", "peixes", "hortifruti", "padaria", "laticinios", "congelados"]);
+
+/**
+ * Move an item to another place and adjust its date when storage changes it:
+ * - into the freezer: fresh food keeps much longer (never shortens the date);
+ * - out of the freezer (thawing): it must be used soon (never extends the date).
+ * Returns the new expiry and a function that undoes the move.
+ */
+export async function moveItem(item: FoodItem, to: Location, ref = today()): Promise<{ expiryDate: string; undo: () => Promise<void> }> {
+  const from = item.location;
+  let expiryDate = item.expiryDate;
+  if (to !== from && FREEZABLE.has(item.category)) {
+    if (to === "freezer") {
+      const frozen = addDays(ref, suggestShelfLifeDays(item.name, item.category, "freezer"));
+      if (!expiryDate || frozen > expiryDate) expiryDate = frozen;
+    } else if (from === "freezer") {
+      const thawDays = to === "geladeira"
+        ? item.category === "carnes" || item.category === "peixes" ? 2 : suggestShelfLifeDays(item.name, item.category, "geladeira")
+        : 1;
+      const thawed = addDays(ref, thawDays);
+      if (!expiryDate || thawed < expiryDate) expiryDate = thawed;
+    }
+  }
+  const before = { location: from, expiryDate: item.expiryDate };
+  await db.items.update(item.id!, { location: to, expiryDate });
+  return { expiryDate, undo: async () => { await db.items.update(item.id!, before); } };
 }

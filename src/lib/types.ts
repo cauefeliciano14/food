@@ -55,6 +55,8 @@ export interface Recipe {
   steps: string[];
   tags: string[];
   favorite?: boolean;
+  /** photo of the finished dish (small JPEG data URL), added by the user */
+  photo?: string;
   source: "padrao" | "minha" | "ia";
   createdAt: number;
 }

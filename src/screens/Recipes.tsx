@@ -8,11 +8,25 @@ import type { Recipe } from "../lib/types";
 import { Planner } from "../components/Planner";
 import { BookOpen, CalendarDays, Plus, Search, Sparkles, UtensilsCrossed } from "lucide-react";
 import { RecipeCard } from "../components/RecipeCard";
+import { matchesKind, RECIPE_KINDS, RECIPE_SORTS, sortMatches, type RecipeSort } from "../lib/recipeFilters";
 import { EmptyState } from "../components/icons";
 
 type Filter = "posso" | "quase" | "todas" | "favoritas" | "minhas";
 
 const VIEW_KEY = "despensa:recipesView";
+const PREFS_KEY = "despensa:recipesPrefs";
+interface Prefs { filter: Filter; kind: string; sort: RecipeSort }
+function loadPrefs(): Prefs {
+  const d: Prefs = { filter: "posso", kind: "", sort: "sugestao" };
+  try {
+    return { ...d, ...JSON.parse(localStorage.getItem(PREFS_KEY) || "{}") };
+  } catch {
+    return d;
+  }
+}
+function savePrefs(p: Prefs) {
+  try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch { /* ignore */ }
+}
 function loadView(): "livro" | "semana" {
   try {
     return localStorage.getItem(VIEW_KEY) === "semana" ? "semana" : "livro";
@@ -27,7 +41,14 @@ export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe:
     setViewState(v);
     try { localStorage.setItem(VIEW_KEY, v); } catch { /* ignore */ }
   };
-  const [filter, setFilter] = useState<Filter>("posso");
+  const prefs = loadPrefs();
+  const [filter, setFilterState] = useState<Filter>(prefs.filter);
+  const [kind, setKindState] = useState(prefs.kind);
+  const [sort, setSortState] = useState<RecipeSort>(prefs.sort);
+  const persist = (p: Partial<Prefs>) => savePrefs({ filter, kind, sort, ...p });
+  const setFilter = (v: Filter) => { setFilterState(v); persist({ filter: v }); };
+  const setKind = (v: string) => { setKindState(v); persist({ kind: v }); };
+  const setSort = (v: RecipeSort) => { setSortState(v); persist({ sort: v }); };
   const [q, setQ] = useState("");
   const recipes = useLiveQuery(() => db.recipes.toArray(), []) ?? [];
   const items = useLiveQuery(() => db.items.toArray(), []) ?? [];
@@ -38,8 +59,9 @@ export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe:
   );
 
   const nq = normalize(q);
-  const shown = ranked.filter((m) => {
+  const shown = sortMatches(ranked.filter((m) => {
     const r = m.recipe;
+    if (!matchesKind(r, kind)) return false;
     if (nq && !normalize(`${r.title} ${r.tags.join(" ")} ${r.ingredients.map((i) => i.name).join(" ")}`).includes(nq)) return false;
     switch (filter) {
       case "posso": return m.canMake;
@@ -48,7 +70,7 @@ export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe:
       case "minhas": return r.source !== "padrao";
       default: return true;
     }
-  });
+  }), sort);
 
   const counts = {
     posso: ranked.filter((m) => m.canMake).length,
@@ -81,6 +103,18 @@ export function Recipes({ openRecipe, onNew, onAI, openShopping }: { openRecipe:
           ] as [Filter, string][]).map(([v, label]) => (
             <button key={v} className={`chip ${filter === v ? "active" : ""}`} onClick={() => setFilter(v)}>{label}</button>
           ))}
+        </div>
+        <div className="chips" role="group" aria-label="Tipo de prato">
+          {RECIPE_KINDS.map((k) => (
+            <button key={k.value} className={`chip ${kind === k.value ? "active" : ""}`} aria-pressed={kind === k.value} onClick={() => setKind(k.value)}>{k.label}</button>
+          ))}
+        </div>
+        <div className="row" style={{ justifyContent: "space-between" }}>
+          <span className="small muted">{shown.length} {shown.length === 1 ? "receita" : "receitas"}</span>
+          <select value={sort} onChange={(e) => setSort(e.target.value as RecipeSort)} aria-label="Ordenar receitas"
+            style={{ width: "auto", minHeight: 40, borderRadius: 99, fontWeight: 600, fontSize: "0.88rem" }}>
+            {RECIPE_SORTS.map(([v, label]) => <option key={v} value={v}>{label}</option>)}
+          </select>
         </div>
         {shown.length === 0 ? (
           <EmptyState icon={UtensilsCrossed}>

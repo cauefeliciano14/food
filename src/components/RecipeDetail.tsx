@@ -12,6 +12,7 @@ import { ExpiryBadge, fmtQty } from "./ItemRow";
 import { RecipeForm } from "./RecipeForm";
 import { CalendarDays, Check, ChefHat, Clock, Minus, Pencil, ShoppingCart, Star, Users, X } from "lucide-react";
 import { dishStyle } from "./icons";
+import { DishPhoto } from "./DishPhoto";
 
 export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { recipe: Recipe; onDone: () => void; onOpenShopping: () => void }) {
   const recipe = useLiveQuery(() => db.recipes.get(initial.id!), [initial.id]) ?? initial;
@@ -60,7 +61,10 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
 
   return (
     <div className="stack">
-      <div className="recipe-hero" style={{ "--h": dish.hue } as CSSProperties}><dish.icon size={52} strokeWidth={1.4} aria-hidden="true" /></div>
+      {recipe.photo
+        ? <img className="recipe-photo" src={recipe.photo} alt={`Foto de ${recipe.title}`} />
+        : <div className="recipe-hero" style={{ "--h": dish.hue } as CSSProperties}><dish.icon size={52} strokeWidth={1.4} aria-hidden="true" /></div>}
+      <DishPhoto recipe={recipe} />
       <div className="row wrap small muted">
         <span className="icon-label"><Clock size={14} />{recipe.minutes} min</span>·<span className="icon-label"><Users size={14} />{recipe.servings} {recipe.servings === 1 ? "porção" : "porções"}</span>
         {recipe.tags.map((t) => <span key={t} className="badge sem-data">{t}</span>)}

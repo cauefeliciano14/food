@@ -10,6 +10,7 @@ export interface AiUses {
   link: boolean; // recipe from a site that doesn't publish it in a readable format
   nota: boolean; // receipt photo without QR code
   sugestao: boolean; // "what can I cook" suggestions
+  organizar: boolean; // "Organizar com IA": practical names, categories and dates by storage
 }
 
 /** What the app may reach on the internet. Everything else stays on the phone. */
@@ -36,7 +37,7 @@ export interface Settings {
 const DEFAULTS: Settings = {
   apiKey: "", notifyDays: 3, theme: "auto",
   aiEnabled: false, aiMonthlyLimit: 3, apiKeyExpires: "",
-  ai: { produto: true, validade: true, receita: true, link: true, nota: true, sugestao: true },
+  ai: { produto: true, validade: true, receita: true, link: true, nota: true, sugestao: true, organizar: true },
   net: { produtos: true, sefaz: true, links: true },
 };
 

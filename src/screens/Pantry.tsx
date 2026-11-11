@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { Clock, Package, Plus, Search, TriangleAlert, X } from "lucide-react";
+import { Clock, Package, Plus, Search, TriangleAlert, X, Sparkles } from "lucide-react";
 import { db } from "../lib/db";
 import { LOCATIONS, type FoodItem, type Location } from "../lib/types";
 import { today } from "../lib/dates";
@@ -25,7 +25,7 @@ const GROUPS: { key: string; title: string; test: (days: number | null) => boole
   { key: "sem", title: "Sem validade", test: (d) => d == null },
 ];
 
-export function Pantry({ initialFilter, openItem, onAdd }: { initialFilter?: string; openItem: (i: FoodItem) => void; onAdd: () => void }) {
+export function Pantry({ initialFilter, openItem, onAdd, onOrganize }: { initialFilter?: string; openItem: (i: FoodItem) => void; onAdd: () => void; onOrganize: () => void }) {
   const [filter, setFilter] = useState<Filter>((initialFilter as Filter) || "todos");
   const [sort, setSort] = useState<Sort>("validade");
   const [q, setQ] = useState("");
@@ -70,11 +70,14 @@ export function Pantry({ initialFilter, openItem, onAdd }: { initialFilter?: str
     <>
       <header className="page-header">
         <h1>Despensa</h1>
+        <div className="row" style={{ gap: 8 }}>
+        <button className="btn sm" onClick={onOrganize} aria-label="Organizar com IA"><Sparkles size={16} />IA</button>
         <select value={sort} onChange={(e) => setSort(e.target.value as Sort)} style={{ width: "auto", minHeight: 38, borderRadius: 99, fontWeight: 600, fontSize: "0.88rem" }} aria-label="Ordenar">
           <option value="validade">Por validade</option>
           <option value="nome">Por nome</option>
           <option value="compra">Mais recentes</option>
         </select>
+        </div>
       </header>
       <div className="page stack">
         <div className="search">

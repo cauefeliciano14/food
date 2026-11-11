@@ -21,6 +21,7 @@ import { RecipeForm } from "./components/RecipeForm";
 import { AISuggest } from "./components/AISuggest";
 import { BarcodeAdd } from "./components/BarcodeAdd";
 import { WasteReport } from "./components/WasteReport";
+import { OrganizeAI } from "./components/OrganizeAI";
 import { BuyAgain, QuickAdd } from "./components/QuickAdd";
 import { notifyExpiringOncePerDay } from "./lib/notify";
 import { db } from "./lib/db";
@@ -40,6 +41,7 @@ type Modal =
   | { kind: "ai" }
   | { kind: "barcode" }
   | { kind: "waste" }
+  | { kind: "organize" }
   | null;
 
 export default function App() {
@@ -84,7 +86,7 @@ export default function App() {
     <div className="app">
       <main className="screen" key={tab}>
         {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openWaste={() => setModal({ kind: "waste" })} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
-        {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} />}
+        {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} onOrganize={() => setModal({ kind: "organize" })} />}
         {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} openShopping={() => setTab("compras")} />}
         {tab === "compras" && <Shopping />}
         {tab === "ajustes" && <Settings />}
@@ -163,6 +165,11 @@ export default function App() {
         </Sheet>
       )}
       {modal?.kind === "barcode" && <Sheet title="Código de barras" onClose={close} onBack={back}><BarcodeAdd onDone={close} /></Sheet>}
+      {modal?.kind === "organize" && (
+        <Sheet title="Organizar com IA" onClose={close} onBack={back}>
+          <OrganizeAI onDone={close} onNeedSettings={toSettings} />
+        </Sheet>
+      )}
       {modal?.kind === "waste" && <Sheet title="Desperdício" onClose={close} onBack={back}><WasteReport /></Sheet>}
       {modal?.kind === "ai" && (
         <Sheet title="Sugestão da IA" onClose={close} onBack={back}>

@@ -21,6 +21,7 @@ const AI_USES: [keyof AiUses, string, string][] = [
   ["link", "Receita por link", "Só quando o site não publica a receita em formato padrão"],
   ["nota", "Nota sem QR code", "Lê a foto do cupom"],
   ["sugestao", "Sugestões de receita", "Cria receitas com o que você tem"],
+  ["organizar", "Organizar a despensa", "Só quando você toca no botão: nomes práticos e validade conforme onde está guardado"],
 ];
 
 const NET_USES: [keyof NetUses, string, string][] = [

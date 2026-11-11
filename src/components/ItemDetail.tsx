@@ -9,7 +9,7 @@ import { ItemBadge, fmtQty } from "./ItemRow";
 import { OpenItem } from "./OpenItem";
 import { freshnessNote } from "../lib/freshness";
 import { ItemForm } from "./ItemForm";
-import { Check, Info, PackageOpen, Pencil, ShoppingCart, Split, Trash2 } from "lucide-react";
+import { Check, Info, PackageOpen, Pencil, ShoppingCart, Sparkles, Split, Trash2 } from "lucide-react";
 import { CategoryIcon, LocationIcon } from "./icons";
 
 export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => void }) {
@@ -43,8 +43,9 @@ export function ItemDetail({ item, onDone }: { item: FoodItem; onDone: () => voi
           <ItemBadge item={item} />
         </div>
         {note && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Info size={14} style={{ marginTop: 3 }} /><span>{note}</span></div>}
-        {item.fullName && item.fullName !== item.name && <div className="small"><span className="muted">Nome no código: </span>{item.fullName}</div>}
+        {item.fullName && item.fullName !== item.name && <div className="small"><span className="muted">Nome original: </span>{item.fullName}</div>}
         {item.notes && <div className="small">{item.notes}</div>}
+        {item.tip && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Sparkles size={14} style={{ marginTop: 3 }} aria-label="Dica da IA" /><span>{item.tip}</span></div>}
       </div>
 
       <label className="field">

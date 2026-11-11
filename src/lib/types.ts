@@ -33,6 +33,10 @@ export interface FoodItem {
   /** price paid per 1 `unit` (R$), when known — used to value waste */
   unitPrice?: number;
   barcode?: string;
+  /** storage tip / why the date was adjusted (from "Organizar com IA") */
+  tip?: string;
+  /** when the AI last reviewed this item — the button only sends items not reviewed yet */
+  aiReviewedAt?: number;
   createdAt: number;
 }
 

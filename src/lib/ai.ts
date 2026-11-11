@@ -221,3 +221,47 @@ export async function suggestRecipe(
     "Não consegui gerar a receita. Tente novamente.");
   return toDraft(r);
 }
+
+// ---------- "Organizar com IA": review the pantry list on demand ----------
+
+const LOCATION_VALUES = ["geladeira", "freezer", "despensa", "armario"] as const;
+
+const OrganizeSchema = z.object({
+  items: z.array(z.object({
+    id: z.number().describe("o id recebido, sem alterar"),
+    name: z.string().describe("Nome prático e curto em português (até 3 palavras, sem marca). Mantenha o atual se já for bom"),
+    category: z.enum(categoryValues),
+    location: z.enum(LOCATION_VALUES).describe("Onde está guardado. Mantenha o informado, a não ser que seja claramente impossível (ex.: sorvete na despensa)"),
+    expiryDate: z.string().describe("Validade em YYYY-MM-DD considerando o local e se está aberto; repita a atual se não houver motivo para mudar"),
+    changedExpiry: z.boolean().describe("true só se a validade sugerida for diferente da atual"),
+    reason: z.string().describe("Se mudou a validade: o motivo em uma frase curta. Senão, vazio"),
+    tip: z.string().describe("Uma dica curta e prática de conservação para este item (até 120 caracteres)"),
+  })),
+});
+
+export type OrganizeSuggestion = z.infer<typeof OrganizeSchema>["items"][number];
+
+const ORGANIZE_PROMPT = `Você ajuda a organizar a despensa de uma casa no Brasil. Para cada item da lista (JSON), devolva:
+- name: nome prático, popular e curto (ex.: "ARROZ TIO JOAO T1 5KG" → "Arroz"; "Bebida láctea fermentada morango" → "Iogurte de morango"). O nome original continua guardado no app, então simplifique sem medo, mas não troque o produto.
+- category: a categoria correta.
+- location: onde está guardado (use o informado; só corrija se for impossível).
+- expiryDate: a validade realista PARA O LOCAL ONDE ESTÁ e considerando se foi aberto:
+  • Itens industrializados FECHADOS com data impressa (origem "codigo" ou "nota" com data conferida): mantenha a data, exceto se estiverem abertos.
+  • Itens ABERTOS: use o prazo depois de aberto, contado de openedAt, sem passar da data atual quando ela for menor.
+  • Frutas, verduras, carnes, pães e itens sem data impressa (data estimada): estime a partir da data de compra e do local. Geladeira prolonga frutas/verduras/carnes cruas (carne crua na geladeira: 2–3 dias; no freezer: ~3 meses); pão de forma dura mais fora da geladeira mas mofa menos dentro; banana escurece na geladeira mas a polpa dura mais.
+  • Não invente prazos longos para perecíveis; prefira o conservador.
+- changedExpiry/reason: diga por que mudou (ex.: "Na geladeira o tomate dura cerca de 10 dias").
+- tip: dica curta de conservação.
+Hoje é DATA. Devolva um item para cada id recebido, na mesma ordem.`;
+
+export async function organizePantry(items: FoodItem[]): Promise<OrganizeSuggestion[]> {
+  const list = items.map((it) => ({
+    id: it.id, nome: it.name, nomeOriginal: it.fullName ?? "", quantidade: `${it.quantity} ${it.unit}`,
+    categoria: it.category, local: it.location, compra: it.purchaseDate, validadeAtual: it.expiryDate,
+    abertoEm: it.openedAt ?? "", origem: it.barcode ? "codigo" : "manual", obs: it.notes ?? "",
+  }));
+  const r = await ask("organizar", OrganizeSchema,
+    `${ORGANIZE_PROMPT.replace("DATA", today())}\n\n<itens>\n${JSON.stringify(list)}\n</itens>`,
+    "Não consegui analisar a lista agora. Tente de novo.");
+  return r.items;
+}

@@ -73,3 +73,17 @@ describe("AI switches and monthly cap", () => {
     expect(() => assertAi("nota")).toThrow(AiLimitError);
   });
 });
+
+describe("AI key expiry reminder", () => {
+  beforeEach(() => store.clear());
+  it("counts days left only when AI is on and a date is set", async () => {
+    const { keyDaysLeft } = await import("../settings");
+    const ref = new Date(2026, 10, 11);
+    expect(keyDaysLeft(loadSettings(), ref)).toBeNull();
+    saveSettings({ ...loadSettings(), aiEnabled: true, apiKey: "sk-ant-x", apiKeyExpires: "2026-11-17" });
+    expect(keyDaysLeft(loadSettings(), ref)).toBe(6);
+    expect(keyDaysLeft(loadSettings(), new Date(2026, 10, 18))).toBe(-1);
+    saveSettings({ ...loadSettings(), aiEnabled: false });
+    expect(keyDaysLeft(loadSettings(), ref)).toBeNull();
+  });
+});

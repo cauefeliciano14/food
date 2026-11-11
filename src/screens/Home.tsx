@@ -7,6 +7,8 @@ import type { FoodItem, Recipe } from "../lib/types";
 import { ItemRow } from "../components/ItemRow";
 import { RecipeCard } from "../components/RecipeCard";
 import { IconTile } from "../components/icons";
+import { KeyExpiryNote } from "../components/AiNetSettings";
+import { loadSettings } from "../lib/settings";
 import { ChartColumn, ChevronRight, CircleCheck, Moon, Plus, Settings, Sun, TriangleAlert } from "lucide-react";
 import { daysLeft, effectiveDate, itemStatus } from "../lib/freshness";
 
@@ -61,6 +63,7 @@ export function Home({ go, openItem, openRecipe, openSettings, openWaste }: {
         <button className="icon-btn" onClick={openSettings} aria-label="Ajustes"><Settings size={22} /></button>
       </header>
       <div className="page">
+        <KeyExpiryNote s={loadSettings()} onOpen={openSettings} />
         <div className={`hero ${tone}`}>
           <div className="hero-title">
             {items.length === 0 ? <>Vamos começar</> : tone === "" ? <><CircleCheck size={22} /> Tudo em dia</> : <><TriangleAlert size={22} /> {plural(attention.length, "item pede", "itens pedem")} atenção</>}

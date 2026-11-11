@@ -27,13 +27,15 @@ export interface Settings {
   aiEnabled: boolean;
   /** monthly spending cap in US$ (what Anthropic charges); the app stops calling the AI past it */
   aiMonthlyLimit: number;
+  /** when the API key expires (YYYY-MM-DD), as chosen in the Anthropic Console — for the reminder */
+  apiKeyExpires: string;
   ai: AiUses;
   net: NetUses;
 }
 
 const DEFAULTS: Settings = {
   apiKey: "", notifyDays: 3, theme: "auto",
-  aiEnabled: false, aiMonthlyLimit: 3,
+  aiEnabled: false, aiMonthlyLimit: 3, apiKeyExpires: "",
   ai: { produto: true, validade: true, receita: true, link: true, nota: true, sugestao: true },
   net: { produtos: true, sefaz: true, links: true },
 };
@@ -55,6 +57,15 @@ export function loadSettings(): Settings {
 /** Is the AI on, with a key, for this use? */
 export function aiAllowed(use: keyof AiUses, s: Settings = loadSettings()): boolean {
   return s.aiEnabled && !!s.apiKey && s.ai[use];
+}
+
+/** Days until the AI key expires (negative = expired), or null when unknown / AI off. */
+export function keyDaysLeft(s: Settings = loadSettings(), ref = new Date()): number | null {
+  if (!s.aiEnabled || !s.apiKey || !/^\d{4}-\d{2}-\d{2}$/.test(s.apiKeyExpires)) return null;
+  const [y, m, d] = s.apiKeyExpires.split("-").map(Number);
+  const end = Date.UTC(y, m - 1, d);
+  const now = Date.UTC(ref.getFullYear(), ref.getMonth(), ref.getDate());
+  return Math.round((end - now) / 86400000);
 }
 
 export function netAllowed(use: keyof NetUses, s: Settings = loadSettings()): boolean {

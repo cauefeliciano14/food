@@ -54,7 +54,7 @@ async function ask<S extends z.ZodType>(use: keyof AiUses, schema: S, content: C
       output_config: { effort: "low", format: betaZodOutputFormat(schema) },
     });
   } catch (e) {
-    if (e instanceof Anthropic.AuthenticationError) throw new Error("A chave da IA não foi aceita. Confira em Ajustes → IA.");
+    if (e instanceof Anthropic.AuthenticationError) throw new Error("A chave da IA não foi aceita (pode ter vencido ou sido apagada). Crie uma nova em console.anthropic.com → Chaves de API e cole em Ajustes → IA.");
     if (e instanceof Anthropic.PermissionDeniedError) throw new Error("A chave não tem permissão (crédito esgotado ou limite da conta Anthropic).");
     if (e instanceof Anthropic.RateLimitError) throw new Error("A IA está ocupada agora. Tente de novo em instantes.");
     if (e instanceof Anthropic.APIConnectionError) throw new Error("Sem internet para falar com a IA.");

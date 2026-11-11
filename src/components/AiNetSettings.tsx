@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Globe, Sparkles } from "lucide-react";
-import { loadSpend, type AiUses, type NetUses, type Settings } from "../lib/settings";
+import { keyDaysLeft, loadSpend, type AiUses, type NetUses, type Settings } from "../lib/settings";
 
 export function Switch({ on, onChange, label, hint, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; hint?: string; disabled?: boolean }) {
   return (
@@ -52,8 +52,13 @@ export function AiSettings({ s, update }: { s: Settings; update: (p: Partial<Set
         <>
           <label className="field">
             <span>Chave da API da Anthropic</span>
-            <input type="password" autoComplete="off" placeholder="sk-ant-…" value={s.apiKey} onChange={(e) => update({ apiKey: e.target.value.trim() })} />
+            <input type="password" autoComplete="off" placeholder="sk-ant-…" value={s.apiKey} onChange={(e) => update({ apiKey: e.target.value.trim(), apiKeyExpires: "" })} />
           </label>
+          <label className="field">
+            <span>A chave vence em (a data em “Expira” no Console)</span>
+            <input type="date" value={s.apiKeyExpires} onChange={(e) => update({ apiKeyExpires: e.target.value })} />
+          </label>
+          <KeyExpiryNote s={s} />
           <p className="small muted" style={{ margin: 0 }}>
             Crie em <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noreferrer">console.anthropic.com</a>. A chave fica só neste celular e vai direto para a Anthropic.
             Para segurança extra, defina também um limite de gasto lá no Console (Limits).
@@ -83,6 +88,24 @@ export function AiSettings({ s, update }: { s: Settings; update: (p: Partial<Set
       )}
     </div>
   );
+}
+
+export function KeyExpiryNote({ s, onOpen }: { s: Settings; onOpen?: () => void }) {
+  const d = keyDaysLeft(s);
+  if (d == null || d > 3) {
+    return s.aiEnabled && s.apiKey && !s.apiKeyExpires && !onOpen
+      ? <span className="small muted">Informe a data para o app avisar antes de a chave vencer.</span>
+      : null;
+  }
+  const text = d < 0 ? "A chave da IA venceu." : d === 0 ? "A chave da IA vence hoje." : `A chave da IA vence em ${d} ${d === 1 ? "dia" : "dias"}.`;
+  const body = (
+    <>
+      <b>{text}</b> Crie outra em console.anthropic.com → Chaves de API (escolha um prazo longo) e cole em Ajustes → IA.
+    </>
+  );
+  return onOpen
+    ? <button type="button" className={`notice small ${d < 0 ? "error" : ""}`} style={{ textAlign: "left", width: "100%", border: "none", cursor: "pointer", marginBottom: 12, font: "inherit", color: "inherit" }} onClick={onOpen}>{body}</button>
+    : <div className={`notice small ${d < 0 ? "error" : ""}`} role="status">{body}</div>;
 }
 
 export function NetSettings({ s, update }: { s: Settings; update: (p: Partial<Settings>) => void }) {

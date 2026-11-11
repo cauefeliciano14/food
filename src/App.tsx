@@ -82,15 +82,15 @@ export default function App() {
 
   return (
     <div className="app">
-      <div className="screen" key={tab}>
+      <main className="screen" key={tab}>
         {tab === "inicio" && <Home go={go} openSettings={() => setTab("ajustes")} openWaste={() => setModal({ kind: "waste" })} openItem={(item) => setModal({ kind: "item", item })} openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} />}
         {tab === "despensa" && <Pantry key={pantryFilter ?? "all"} initialFilter={pantryFilter} openItem={(item) => setModal({ kind: "item", item })} onAdd={() => setModal({ kind: "add-menu" })} />}
         {tab === "receitas" && <Recipes openRecipe={(recipe) => setModal({ kind: "recipe", recipe })} onNew={() => setModal({ kind: "recipe-new" })} onAI={() => setModal({ kind: "ai" })} openShopping={() => setTab("compras")} />}
         {tab === "compras" && <Shopping />}
         {tab === "ajustes" && <Settings />}
-      </div>
+      </main>
 
-      <nav className="tabbar">
+      <nav className="tabbar" aria-label="Seções">
         <div className="tabbar-inner">
           <TabBtn icon={House} label="Início" active={tab === "inicio"} onClick={() => setTab("inicio")} />
           <TabBtn icon={Package} label="Despensa" active={tab === "despensa"} onClick={() => { setPantryFilter(undefined); setTab("despensa"); }} />

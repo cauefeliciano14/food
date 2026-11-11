@@ -9,8 +9,10 @@ import { guessCategory } from "../lib/shopping";
 import { defaultLocation, suggestShelfLifeDays } from "../lib/shelfLife";
 import { BarcodeScanner } from "../components/BarcodeScanner";
 import { CATEGORIES, LOCATIONS, UNITS, type Category, type Location } from "../lib/types";
-import { Camera, Image as ImageIcon, PartyPopper, QrCode } from "lucide-react";
+import { CalendarCheck, Camera, ChevronLeft, ChevronRight, Image as ImageIcon, PartyPopper, QrCode } from "lucide-react";
 import { IconTile } from "../components/icons";
+import { ExpiryPhoto } from "../components/ExpiryPhoto";
+import { formatBR } from "../lib/dates";
 
 interface Draft {
   include: boolean;
@@ -23,9 +25,11 @@ interface Draft {
   shelfLifeDays: number;
   expiryDate: string;
   unitPrice: number;
+  /** the date came from the package (photo or typed), not an estimate */
+  checked?: boolean;
 }
 
-type Stage = "pick" | "qr" | "reading" | "review" | "done";
+type Stage = "pick" | "qr" | "reading" | "review" | "guide" | "done";
 
 export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedKey: () => void }) {
   const [stage, setStage] = useState<Stage>("pick");
@@ -129,7 +133,7 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
 
   function changePurchaseDate(date: string) {
     setPurchaseDate(date);
-    setDrafts((ds) => ds.map((d) => ({ ...d, expiryDate: addDays(date || today(), d.shelfLifeDays) })));
+    setDrafts((ds) => ds.map((d) => (d.checked ? d : { ...d, expiryDate: addDays(date || today(), d.shelfLifeDays) })));
   }
 
   async function save() {
@@ -153,7 +157,8 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     setStage("done");
   }
 
-  useBack(stage === "qr" || stage === "review", () => setStage("pick"));
+  const [guideAt, setGuideAt] = useState(0);
+  useBack(stage === "qr" || stage === "review" || stage === "guide", () => setStage(stage === "guide" ? "review" : "pick"));
 
   if (stage === "done") {
     return (
@@ -175,8 +180,48 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
     );
   }
 
+  if (stage === "guide") {
+    // One item per screen, big buttons: photo of the date, next, previous.
+    const idx = drafts.map((d, i) => (d.include ? i : -1)).filter((i) => i >= 0);
+    const pos = Math.min(guideAt, idx.length - 1);
+    const i = idx[pos];
+    const d = drafts[i];
+    const last = pos === idx.length - 1;
+    const setDate = (iso: string) => update(i, { expiryDate: iso, checked: true });
+    return (
+      <div className="stack">
+        <div className="row small" style={{ justifyContent: "space-between" }}>
+          <b>Item {pos + 1} de {idx.length}</b>
+          <span className="muted">{idx.filter((j) => drafts[j].checked).length} conferido(s)</span>
+        </div>
+        <div className="progress" aria-hidden="true"><div style={{ width: `${((pos + 1) / idx.length) * 100}%` }} /></div>
+        <div className="card stack" style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "1.4rem", fontWeight: 800 }} aria-live="polite">{d.name}</div>
+          <div className="small muted">{d.quantity} {d.unit} · {LOCATIONS.find((l) => l.value === d.location)?.label}</div>
+          <div style={{ fontSize: "1.1rem" }}>
+            Validade: <b>{formatBR(d.expiryDate)}</b>{" "}
+            <span className={`small ${d.checked ? "" : "muted"}`}>{d.checked ? "(conferida)" : "(estimativa)"}</span>
+          </div>
+        </div>
+        <ExpiryPhoto key={i} big itemName={d.name} onDate={setDate} />
+        <label className="field">
+          <span>Ou digite a data</span>
+          <input type="date" value={d.expiryDate} onChange={(e) => setDate(e.target.value)} />
+        </label>
+        <div className="grid-2">
+          <button className="btn" style={{ minHeight: 52 }} disabled={pos === 0} onClick={() => setGuideAt(pos - 1)}><ChevronLeft size={20} />Anterior</button>
+          {last
+            ? <button className="btn primary" style={{ minHeight: 52 }} onClick={() => setStage("review")}><CalendarCheck size={20} />Concluir</button>
+            : <button className="btn primary" style={{ minHeight: 52 }} onClick={() => setGuideAt(pos + 1)}>{d.checked ? "Próximo" : "Pular"}<ChevronRight size={20} /></button>}
+        </div>
+        <button className="btn ghost block" onClick={() => setStage("review")}>Voltar para a lista</button>
+      </div>
+    );
+  }
+
   if (stage === "review") {
     const count = drafts.filter((d) => d.include).length;
+    const checkedCount = drafts.filter((d) => d.include && d.checked).length;
     return (
       <div className="stack">
         <div className="small muted">{store && <>{store} · </>}Confira os itens, ajuste o que precisar e desmarque o que não é comida.</div>
@@ -184,6 +229,11 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
           <span>Data da compra</span>
           <input type="date" value={purchaseDate} onChange={(e) => changePurchaseDate(e.target.value)} />
         </label>
+        {count > 0 && (
+          <button className="btn block" style={{ minHeight: 52 }} onClick={() => { setGuideAt(0); setStage("guide"); }}>
+            <CalendarCheck size={20} />Conferir validades um a um, com foto{checkedCount > 0 ? ` (${checkedCount}/${count})` : ""}
+          </button>
+        )}
         <div className="list">
           {drafts.map((d, i) => (
             <div key={i} className={`scan-row ${d.include ? "" : "off"}`}>
@@ -209,8 +259,12 @@ export function ScanReceipt({ onDone, onNeedKey }: { onDone: () => void; onNeedK
                       <select value={d.category} onChange={(e) => update(i, { category: e.target.value as Category })} aria-label="Categoria">
                         {CATEGORIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
                       </select>
-                      <input type="date" value={d.expiryDate} aria-label="Validade"
-                        onChange={(e) => update(i, { expiryDate: e.target.value })} />
+                      <input type="date" value={d.expiryDate} aria-label={`Validade de ${d.name}`}
+                        onChange={(e) => update(i, { expiryDate: e.target.value, checked: true })} />
+                    </div>
+                    <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 6 }}>
+                      <ExpiryPhoto itemName={d.name} onDate={(iso) => update(i, { expiryDate: iso, checked: true })} />
+                      <span className="small muted">{d.checked ? "Validade conferida" : "Validade estimada"}</span>
                     </div>
                   </>
                 )}

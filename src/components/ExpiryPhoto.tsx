@@ -6,7 +6,13 @@ import { parseExpiryFromText } from "../lib/expiryOcr";
 import { formatBR } from "../lib/dates";
 
 /** "Ler validade pela foto": snap the date printed on the package and fill it in. */
-export function ExpiryPhoto({ onDate }: { onDate: (iso: string) => void }) {
+export function ExpiryPhoto({ onDate, itemName, big = false }: {
+  onDate: (iso: string) => void;
+  /** for screen readers when there are many on one screen ("Ler validade de Leite pela foto") */
+  itemName?: string;
+  /** large button (guided one-by-one check) */
+  big?: boolean;
+}) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ text: string; error?: boolean } | null>(null);
   const [others, setOthers] = useState<string[]>([]);
@@ -49,10 +55,12 @@ export function ExpiryPhoto({ onDate }: { onDate: (iso: string) => void }) {
 
   return (
     <div className="stack" style={{ marginTop: 6 }}>
-      <button type="button" className="btn sm" onClick={run} disabled={busy} style={{ alignSelf: "flex-start" }}>
-        <CalendarClock size={16} />{busy ? "Lendo…" : "Ler validade pela foto"}
+      <button type="button" className={big ? "btn primary block" : "btn sm"} onClick={run} disabled={busy}
+        style={big ? { minHeight: 56 } : { alignSelf: "flex-start" }}
+        aria-label={itemName ? `Ler validade de ${itemName} pela foto` : undefined}>
+        <CalendarClock size={big ? 20 : 16} />{busy ? "Lendo…" : big ? "Tirar foto da validade" : "Ler validade pela foto"}
       </button>
-      {msg && <div className={`small ${msg.error ? "error" : "muted"}`}>{msg.text}</div>}
+      <div aria-live="polite" role="status">{msg && <div className={`small ${msg.error ? "error" : "muted"}`}>{msg.text}</div>}</div>
       {others.length > 0 && (
         <div className="chips wrapped">
           <span className="small muted" style={{ alignSelf: "center" }}>Era outra?</span>

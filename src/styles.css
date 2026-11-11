@@ -225,7 +225,7 @@ button.item, .item[role="button"] { cursor: pointer; text-align: left; width: 10
 .stat b { display: block; font-size: 1.5rem; line-height: 1.1; font-weight: 800; font-variant-numeric: tabular-nums; }
 .stat span { font-size: 0.74rem; opacity: 0.9; white-space: nowrap; }
 
-.hscroll { display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 8px; scroll-snap-type: x proximity; scrollbar-width: none; }
+.hscroll { display: flex; gap: 10px; overflow-x: auto; margin: 0 -16px; padding: 2px 16px 8px; scroll-snap-type: x proximity; scroll-padding-inline: 16px; scrollbar-width: none; }
 .hscroll::-webkit-scrollbar { display: none; }
 .hscroll > * { flex: 0 0 62%; max-width: 260px; scroll-snap-align: start; }
 
@@ -249,7 +249,7 @@ button.item, .item[role="button"] { cursor: pointer; text-align: left; width: 10
 /* ---------- tab bar ---------- */
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 10; display: flex; justify-content: center;
-  background: color-mix(in srgb, var(--surface) 92%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: var(--surface); box-shadow: 0 -4px 16px rgb(0 0 0 / 8%);
   border-top: 1px solid var(--border); padding-bottom: env(safe-area-inset-bottom);
 }
 .tabbar-inner { display: grid; grid-template-columns: repeat(5, 1fr); width: 100%; max-width: 720px; }
@@ -402,3 +402,6 @@ input[type="checkbox"] { accent-color: var(--primary); }
 .org-row > input { width: 22px; height: 22px; flex-shrink: 0; margin-top: 2px; }
 .org-row.off { opacity: 0.55; }
 .org-change { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
+
+/* horizontal rows: fade at the right edge so it's clear there's more to swipe */
+.chips, .hscroll { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent); }

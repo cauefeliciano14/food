@@ -29,8 +29,9 @@ describe("upgrade of data saved by the previous version", () => {
     expect(items[1].fullName).toBeUndefined();
     // v5: the new built-in recipes arrive, without duplicating what was there
     const { SEED_RECIPES_2 } = await import("../seedRecipes2");
+    const { SEED_RECIPES_3 } = await import("../seedRecipes3");
     const recipes = await db.recipes.toArray();
-    expect(recipes.length).toBe(2 + SEED_RECIPES_2.length - 1);
+    expect(recipes.length).toBe(2 + SEED_RECIPES_2.length - 1 + SEED_RECIPES_3.length);
     expect(recipes.filter((r) => r.title.startsWith("Bolo de cenoura"))).toHaveLength(1);
     expect(recipes.some((r) => r.title === "Coxinha de frango")).toBe(true);
     const { lookupBarcode } = await import("../barcode");

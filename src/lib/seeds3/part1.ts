@@ -1,0 +1,347 @@
+import type { Recipe } from "../types";
+
+type Seed = Omit<Recipe, "id" | "createdAt" | "source">;
+
+const i = (name: string, amount?: string, optional?: boolean) => ({ name, amount, optional });
+
+export const PART_1: Seed[] = [
+  {
+    title: "Fraldinha na pressão com batata",
+    minutes: 60, servings: 4, tags: ["proteína", "salgado", "panela de pressão"],
+    ingredients: [i("fraldinha", "1 kg"), i("batata", "4 médias"), i("cebola", "1"), i("alho", "4 dentes"), i("tomate", "2"), i("óleo", "2 colheres"), i("água", "1 xícara"), i("sal"), i("pimenta", "a gosto", true), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Corte a fraldinha em pedaços grandes e tempere com alho, sal e pimenta.",
+      "Doure a carne no óleo, na própria panela de pressão, aos poucos.",
+      "Junte a cebola e o tomate picados, refogue e acrescente a água.",
+      "Tampe e cozinhe por 30 minutos após pegar pressão.",
+      "Retire a pressão, junte as batatas em pedaços e cozinhe mais 8 minutos na pressão. Finalize com cheiro-verde.",
+    ],
+  },
+  {
+    title: "Bife à parmegiana",
+    minutes: 50, servings: 4, tags: ["proteína", "salgado", "forno"],
+    ingredients: [i("carne", "4 bifes de alcatra ou patinho"), i("ovo", "2"), i("farinha de trigo", "1/2 xícara"), i("farinha de rosca", "1 xícara"), i("molho de tomate", "2 xícaras"), i("queijo muçarela", "200 g"), i("queijo parmesão ralado", "3 colheres", true), i("alho", "2 dentes"), i("óleo"), i("sal"), i("orégano", "a gosto", true)],
+    steps: [
+      "Bata os bifes para afinar e tempere com alho amassado e sal.",
+      "Passe cada bife na farinha de trigo, no ovo batido e na farinha de rosca.",
+      "Frite em óleo quente até dourar dos dois lados e escorra em papel-toalha.",
+      "Arrume em uma travessa, cubra com molho de tomate, muçarela e parmesão.",
+      "Leve ao forno a 200 °C por 15 minutos, até o queijo derreter. Polvilhe orégano.",
+    ],
+  },
+  {
+    title: "Bife de panela",
+    minutes: 45, servings: 4, tags: ["proteína", "salgado", "básico"],
+    ingredients: [i("carne", "6 bifes de coxão mole"), i("cebola", "1"), i("alho", "3 dentes"), i("tomate", "2"), i("extrato de tomate", "1 colher", true), i("óleo", "2 colheres"), i("água", "2 xícaras"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Tempere os bifes com alho, sal e pimenta.",
+      "Sele os bifes em panela com óleo bem quente, poucos de cada vez. Reserve.",
+      "Refogue a cebola e o tomate picados na mesma panela e junte o extrato.",
+      "Volte os bifes, cubra com água e cozinhe tampado em fogo baixo por 30 minutos, até ficarem macios e com molho.",
+    ],
+  },
+  {
+    title: "Bife a rolê",
+    minutes: 70, servings: 4, tags: ["proteína", "salgado"],
+    ingredients: [i("carne", "6 bifes finos de coxão duro"), i("bacon", "100 g"), i("cenoura", "1"), i("linguiça calabresa", "1", true), i("cebola", "1"), i("alho", "3 dentes"), i("molho de tomate", "1 xícara"), i("água", "2 xícaras"), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Tempere os bifes com alho, sal e pimenta.",
+      "Coloque sobre cada bife uma tira de bacon, de cenoura e de calabresa. Enrole e prenda com palito.",
+      "Doure os rolinhos no óleo de todos os lados e reserve.",
+      "Refogue a cebola picada, junte o molho de tomate, a água e os rolinhos.",
+      "Cozinhe tampado em fogo baixo por cerca de 50 minutos, virando de vez em quando. Retire os palitos antes de servir.",
+    ],
+  },
+  {
+    title: "Strogonoff de carne",
+    minutes: 35, servings: 4, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("carne", "600 g de alcatra ou filé em tiras"), i("cebola", "1"), i("alho", "2 dentes"), i("champignon", "1 vidro", true), i("ketchup", "3 colheres"), i("mostarda", "1 colher"), i("creme de leite", "1 caixinha"), i("manteiga", "1 colher"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Tempere a carne com sal e pimenta.",
+      "Doure as tiras na manteiga em fogo alto, em etapas, e reserve.",
+      "Refogue a cebola e o alho, volte a carne e junte champignon, ketchup e mostarda.",
+      "Cozinhe por 5 minutos, desligue o fogo e misture o creme de leite. Sirva com arroz e batata palha.",
+    ],
+  },
+  {
+    title: "Iscas de carne aceboladas",
+    minutes: 25, servings: 3, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("carne", "500 g de alcatra em tiras"), i("cebola", "2"), i("alho", "3 dentes"), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Tempere as iscas com alho amassado, sal e pimenta.",
+      "Frite em frigideira bem quente com óleo, em pequenas porções, até dourar. Reserve.",
+      "Na mesma frigideira, refogue a cebola em rodelas até murchar.",
+      "Volte a carne, misture rapidamente e finalize com cheiro-verde.",
+    ],
+  },
+  {
+    title: "Virado à paulista",
+    minutes: 60, servings: 4, tags: ["proteína", "salgado"],
+    ingredients: [i("feijão cozido", "3 xícaras com caldo"), i("farinha de mandioca", "1 xícara"), i("bisteca de porco", "4"), i("linguiça", "4 gomos"), i("ovo", "4"), i("couve", "1 maço"), i("banana", "4", true), i("bacon", "100 g"), i("cebola", "1"), i("alho", "4 dentes"), i("óleo"), i("sal")],
+    steps: [
+      "Frite o bacon, junte cebola e alho e acrescente o feijão com caldo. Engrosse aos poucos com a farinha, mexendo até virar um tutu.",
+      "Tempere as bistecas com alho e sal e frite com a linguiça até dourarem.",
+      "Refogue a couve fatiada fininha no alho e óleo rapidamente.",
+      "Frite os ovos e, se quiser, a banana empanada ou só dourada.",
+      "Monte o prato com o virado, as carnes, a couve, o ovo e a banana, com arroz branco.",
+    ],
+  },
+  {
+    title: "Lagarto recheado ao molho madeira",
+    minutes: 120, servings: 6, tags: ["proteína", "salgado", "panela de pressão", "festa"],
+    ingredients: [i("lagarto", "1,2 kg"), i("linguiça calabresa", "1"), i("bacon", "100 g"), i("cenoura", "1"), i("cebola", "2"), i("alho", "4 dentes"), i("vinho tinto seco", "1/2 xícara"), i("farinha de trigo", "1 colher"), i("champignon", "1 vidro", true), i("água", "2 xícaras"), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Fure o lagarto no sentido do comprimento com uma faca fina e recheie com calabresa, bacon e cenoura em tiras.",
+      "Tempere com alho, sal e pimenta e doure de todos os lados no óleo, na panela de pressão.",
+      "Junte uma cebola picada, metade do vinho e a água. Cozinhe por 45 minutos após pegar pressão.",
+      "Retire a carne e deixe amornar para fatiar. No caldo, refogue a outra cebola, junte o resto do vinho, o champignon e a farinha dissolvida em um pouco de água, mexendo até engrossar.",
+      "Volte as fatias ao molho e aqueça por alguns minutos antes de servir.",
+    ],
+  },
+  {
+    title: "Bife a cavalo",
+    minutes: 20, servings: 2, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("carne", "2 bifes de contrafilé"), i("ovo", "2"), i("alho", "2 dentes"), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Tempere os bifes com alho, sal e pimenta.",
+      "Frite em frigideira bem quente com óleo, cerca de 3 minutos de cada lado. Reserve aquecido.",
+      "Na mesma frigideira, frite os ovos com a gema mole.",
+      "Coloque um ovo sobre cada bife e sirva com arroz e batata frita.",
+    ],
+  },
+  {
+    title: "Fígado de boi acebolado",
+    minutes: 30, servings: 4, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("fígado de boi", "500 g em bifes"), i("cebola", "2"), i("alho", "3 dentes"), i("limão", "1"), i("leite", "1 xícara", true), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Deixe o fígado de molho no leite por 15 minutos para suavizar o sabor, se quiser. Escorra.",
+      "Tempere com alho, limão, sal e pimenta.",
+      "Frite rapidamente em óleo bem quente, 1 a 2 minutos de cada lado, para não endurecer. Reserve.",
+      "Doure a cebola em rodelas na mesma frigideira, volte o fígado e sirva em seguida.",
+    ],
+  },
+  {
+    title: "Carne moída com legumes",
+    minutes: 30, servings: 4, tags: ["proteína", "salgado", "rápido", "aproveitamento"],
+    ingredients: [i("carne moída", "500 g"), i("cenoura", "1"), i("batata", "2"), i("abobrinha", "1", true), i("vagem", "1 xícara", true), i("cebola", "1"), i("alho", "2 dentes"), i("tomate", "2"), i("óleo", "1 colher"), i("água", "1/2 xícara"), i("sal"), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Refogue a cebola e o alho no óleo e junte a carne moída, mexendo até soltar e dourar.",
+      "Acrescente o tomate picado e tempere com sal.",
+      "Junte cenoura e batata em cubos e a água. Tampe e cozinhe por 10 minutos.",
+      "Adicione abobrinha e vagem e cozinhe mais 5 minutos, até os legumes ficarem macios. Finalize com cheiro-verde.",
+    ],
+  },
+  {
+    title: "Carne moída com alho-poró",
+    minutes: 25, servings: 4, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("carne moída", "500 g"), i("alho-poró", "1 talo"), i("cebola", "1"), i("alho", "2 dentes"), i("azeite", "2 colheres"), i("molho shoyu", "1 colher", true), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Lave bem o alho-poró e corte em rodelas finas.",
+      "Refogue a cebola e o alho no azeite e junte a carne moída, mexendo até soltar e dourar.",
+      "Tempere com sal, pimenta e shoyu.",
+      "Acrescente o alho-poró e refogue por 3 a 4 minutos, só até murchar.",
+    ],
+  },
+  {
+    title: "Bisteca bovina na frigideira",
+    minutes: 20, servings: 2, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("bisteca bovina", "2"), i("alho", "2 dentes"), i("manteiga", "1 colher"), i("óleo", "1 colher"), i("alecrim", "1 ramo", true), i("sal grosso"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Tire a carne da geladeira 20 minutos antes e tempere com sal grosso e pimenta.",
+      "Aqueça bem a frigideira com óleo e coloque as bistecas, sem mexer, por 3 a 4 minutos.",
+      "Vire, junte manteiga, alho amassado e alecrim e regue a carne com a manteiga por mais 3 minutos.",
+      "Deixe descansar 5 minutos antes de servir.",
+    ],
+  },
+  {
+    title: "Carne assada no forno",
+    minutes: 150, servings: 6, tags: ["proteína", "salgado", "forno", "festa"],
+    ingredients: [i("maminha", "1,2 kg"), i("alho", "5 dentes"), i("cebola", "2"), i("batata", "4", true), i("mostarda", "2 colheres"), i("vinho branco", "1/2 xícara", true), i("azeite", "3 colheres"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Tempere a carne com alho amassado, mostarda, sal, pimenta e vinho e deixe pegar gosto por pelo menos 1 hora.",
+      "Coloque em assadeira sobre a cebola em rodelas, com as batatas em volta, e regue com azeite.",
+      "Cubra com papel-alumínio e asse a 200 °C por 1 hora.",
+      "Retire o papel e asse mais 30 minutos para dourar, regando com o caldo da assadeira.",
+      "Deixe descansar 10 minutos e fatie contra as fibras.",
+    ],
+  },
+  {
+    title: "Bolo de carne moída",
+    minutes: 60, servings: 6, tags: ["proteína", "salgado", "forno"],
+    ingredients: [i("carne moída", "700 g"), i("ovo", "2"), i("farinha de rosca", "1/2 xícara"), i("cebola", "1"), i("alho", "2 dentes"), i("presunto", "100 g", true), i("queijo muçarela", "100 g", true), i("molho de tomate", "1/2 xícara"), i("sal"), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Misture a carne com ovos, farinha de rosca, cebola ralada, alho, sal e cheiro-verde até dar liga.",
+      "Abra metade da massa em forma de bolo inglês untada e coloque presunto e muçarela por cima.",
+      "Cubra com o restante da carne e aperte bem as bordas.",
+      "Espalhe o molho de tomate por cima e asse a 200 °C por cerca de 40 minutos.",
+    ],
+  },
+  {
+    title: "Bife ancho na frigideira",
+    minutes: 20, servings: 2, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("bife ancho", "2 de 3 cm"), i("manteiga", "1 colher"), i("alho", "2 dentes", true), i("óleo", "1 colher"), i("sal grosso"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Deixe os bifes em temperatura ambiente por 20 minutos e seque com papel-toalha.",
+      "Tempere com sal grosso e pimenta só na hora de levar ao fogo.",
+      "Frite em frigideira muito quente com óleo, 3 a 4 minutos de cada lado para ponto médio.",
+      "Junte manteiga e alho no final, regue a carne e deixe descansar 5 minutos antes de fatiar.",
+    ],
+  },
+  {
+    title: "Carne de sol na air fryer",
+    minutes: 40, servings: 3, tags: ["proteína", "salgado", "air fryer"],
+    ingredients: [i("carne de sol", "600 g"), i("cebola", "1"), i("manteiga de garrafa", "2 colheres", true), i("água", "para dessalgar")],
+    steps: [
+      "Corte a carne em cubos e deixe de molho em água por pelo menos 2 horas (fora do tempo de preparo), trocando a água algumas vezes. Escorra e seque.",
+      "Pré-aqueça a air fryer a 200 °C por 5 minutos.",
+      "Coloque a carne no cesto sem amontoar e asse por 18 a 20 minutos, sacudindo na metade.",
+      "Junte a cebola em pétalas nos últimos 5 minutos e regue com manteiga de garrafa ao servir.",
+      "No forno convencional, asse a 220 °C por cerca de 30 minutos, virando na metade.",
+    ],
+  },
+  {
+    title: "Escalope ao molho madeira",
+    minutes: 35, servings: 4, tags: ["proteína", "salgado"],
+    ingredients: [i("filé mignon", "600 g em medalhões finos"), i("cebola", "1"), i("champignon", "1 vidro", true), i("vinho tinto seco", "1/2 xícara"), i("caldo de carne", "1 xícara"), i("farinha de trigo", "1 colher"), i("manteiga", "2 colheres"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Bata levemente os medalhões, tempere com sal e pimenta.",
+      "Sele na manteiga em frigideira quente, 1 a 2 minutos de cada lado. Reserve.",
+      "Na mesma frigideira, doure a cebola, polvilhe a farinha e mexa por 1 minuto.",
+      "Junte o vinho, deixe evaporar um pouco, adicione o caldo e o champignon e mexa até engrossar.",
+      "Volte os escalopes ao molho só para aquecer e sirva.",
+    ],
+  },
+  {
+    title: "Escondidinho de carne seca",
+    minutes: 70, servings: 6, tags: ["proteína", "salgado", "forno"],
+    ingredients: [i("carne seca", "500 g dessalgada"), i("mandioca", "1 kg"), i("leite", "1 xícara"), i("manteiga", "2 colheres"), i("cebola", "1"), i("alho", "3 dentes"), i("tomate", "1", true), i("requeijão", "1/2 copo", true), i("queijo parmesão ralado", "1/2 xícara"), i("sal"), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Cozinhe a carne seca já dessalgada na pressão por 20 minutos e desfie.",
+      "Cozinhe a mandioca até ficar bem macia, retire os fios e amasse com leite, manteiga e sal até virar um purê.",
+      "Refogue cebola, alho e tomate, junte a carne desfiada e o cheiro-verde.",
+      "Em um refratário, faça uma camada de carne, espalhe o requeijão e cubra com o purê.",
+      "Polvilhe parmesão e leve ao forno a 200 °C por 20 minutos, até gratinar.",
+    ],
+  },
+  {
+    title: "Bolo de batata com carne moída",
+    minutes: 60, servings: 6, tags: ["proteína", "salgado", "forno"],
+    ingredients: [i("batata", "1 kg"), i("carne moída", "500 g"), i("leite", "1/2 xícara"), i("manteiga", "2 colheres"), i("ovo", "1"), i("cebola", "1"), i("alho", "2 dentes"), i("molho de tomate", "1/2 xícara"), i("queijo muçarela", "150 g", true), i("queijo parmesão ralado", "3 colheres", true), i("sal")],
+    steps: [
+      "Cozinhe as batatas e amasse com leite, manteiga, ovo e sal até formar um purê firme.",
+      "Refogue cebola e alho, junte a carne moída e frite até dourar. Acrescente o molho de tomate e cozinhe 5 minutos.",
+      "Em forma untada, espalhe metade do purê, cubra com a carne e a muçarela.",
+      "Finalize com o restante do purê e o parmesão e asse a 200 °C por 25 minutos, até dourar.",
+    ],
+  },
+  {
+    title: "Lombo na panela de pressão",
+    minutes: 60, servings: 6, tags: ["proteína", "salgado", "panela de pressão"],
+    ingredients: [i("lombo de porco", "1 kg"), i("alho", "5 dentes"), i("cebola", "1"), i("limão", "1"), i("vinho branco", "1/2 xícara", true), i("água", "1 xícara"), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true), i("folha de louro", "2", true)],
+    steps: [
+      "Tempere o lombo com alho, limão, sal, pimenta e louro e deixe descansar por 30 minutos, se der tempo.",
+      "Doure o lombo inteiro no óleo, na panela de pressão, de todos os lados.",
+      "Junte a cebola, o vinho e a água. Tampe e cozinhe por 30 minutos após pegar pressão.",
+      "Retire a pressão, destampe e deixe o caldo reduzir até virar um molho. Fatie e sirva com o molho.",
+    ],
+  },
+  {
+    title: "Costelinha de porco na pressão",
+    minutes: 60, servings: 4, tags: ["proteína", "salgado", "panela de pressão"],
+    ingredients: [i("costelinha de porco", "1 kg"), i("alho", "5 dentes"), i("cebola", "1"), i("limão", "1"), i("molho barbecue", "1/2 xícara", true), i("água", "2 xícaras"), i("óleo", "1 colher"), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Corte a costelinha em pedaços e tempere com alho, limão, sal e pimenta.",
+      "Doure os pedaços no óleo na panela de pressão. Junte a cebola e a água.",
+      "Cozinhe por 25 minutos após pegar pressão.",
+      "Retire a pressão e deixe secar o caldo em fogo alto, dourando a costelinha. Pincele barbecue no final, se quiser.",
+    ],
+  },
+  {
+    title: "Bisteca de porco",
+    minutes: 25, servings: 4, tags: ["proteína", "salgado", "rápido"],
+    ingredients: [i("bisteca de porco", "4"), i("alho", "3 dentes"), i("limão", "1"), i("óleo", "2 colheres"), i("sal"), i("pimenta", "a gosto", true), i("cebola", "1", true)],
+    steps: [
+      "Tempere as bistecas com alho, limão, sal e pimenta e deixe 10 minutos.",
+      "Frite em frigideira com óleo em fogo médio-alto, cerca de 5 minutos de cada lado, até dourar e cozinhar por dentro.",
+      "Se quiser, doure cebola em rodelas na mesma frigideira e sirva por cima.",
+    ],
+  },
+  {
+    title: "Linguiça assada com batatas",
+    minutes: 55, servings: 4, tags: ["proteína", "salgado", "forno"],
+    ingredients: [i("linguiça toscana", "600 g"), i("batata", "4"), i("cebola", "2"), i("alho", "4 dentes"), i("azeite", "3 colheres"), i("alecrim", "1 ramo", true), i("sal"), i("pimenta", "a gosto", true)],
+    steps: [
+      "Corte as batatas em gomos e a cebola em quartos.",
+      "Coloque tudo em uma assadeira com as linguiças inteiras e os dentes de alho amassados.",
+      "Regue com azeite, tempere as batatas com sal, pimenta e alecrim.",
+      "Asse a 200 °C por 40 a 45 minutos, virando na metade, até as batatas e a linguiça dourarem.",
+    ],
+  },
+  {
+    title: "Feijoada",
+    minutes: 180, servings: 10, tags: ["proteína", "salgado", "panela de pressão", "festa"],
+    ingredients: [i("feijão preto", "1 kg"), i("carne seca", "500 g"), i("costelinha de porco salgada", "500 g"), i("paio", "300 g"), i("linguiça calabresa", "2"), i("bacon", "200 g"), i("orelha de porco", "300 g", true), i("pé de porco", "300 g", true), i("cebola", "2"), i("alho", "8 dentes"), i("folha de louro", "3"), i("óleo", "2 colheres"), i("sal")],
+    steps: [
+      "Deixe o feijão de molho na véspera e as carnes salgadas de molho em água por 12 horas, trocando a água várias vezes (fora do tempo de preparo).",
+      "Cozinhe as carnes salgadas na pressão por 20 minutos e escorra.",
+      "Cozinhe o feijão com o louro e as carnes salgadas na pressão por 30 minutos.",
+      "Frite o bacon, junte cebola e alho, adicione paio e calabresa em rodelas e refogue.",
+      "Misture o refogado ao feijão e cozinhe em fogo baixo, sem pressão, por 40 minutos, até o caldo encorpar. Acerte o sal e sirva com arroz, couve, farofa e laranja.",
+    ],
+  },
+  {
+    title: "Arroz com charque",
+    minutes: 50, servings: 4, tags: ["proteína", "salgado"],
+    ingredients: [i("charque", "400 g dessalgado"), i("arroz", "2 xícaras"), i("cebola", "1"), i("alho", "3 dentes"), i("tomate", "1", true), i("pimentão", "1/2", true), i("água", "4 xícaras quentes"), i("óleo", "2 colheres"), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Corte o charque já dessalgado em cubos pequenos e frite no óleo até dourar.",
+      "Junte cebola, alho, tomate e pimentão picados e refogue.",
+      "Acrescente o arroz e refogue por 2 minutos.",
+      "Cubra com a água quente, prove o sal e cozinhe tampado em fogo baixo até secar, cerca de 20 minutos. Finalize com cheiro-verde.",
+    ],
+  },
+  {
+    title: "Lasanha à bolonhesa",
+    minutes: 80, servings: 8, tags: ["massa", "forno", "salgado", "festa"],
+    ingredients: [i("massa de lasanha", "500 g"), i("carne moída", "600 g"), i("molho de tomate", "4 xícaras"), i("cebola", "1"), i("alho", "3 dentes"), i("presunto", "300 g"), i("queijo muçarela", "400 g"), i("leite", "1 litro"), i("farinha de trigo", "3 colheres"), i("manteiga", "2 colheres"), i("queijo parmesão ralado", "1/2 xícara", true), i("noz-moscada", "uma pitada", true), i("sal")],
+    steps: [
+      "Refogue cebola e alho, frite a carne moída até dourar, junte o molho de tomate e cozinhe 15 minutos.",
+      "Para o molho branco, derreta a manteiga, doure a farinha, junte o leite aos poucos e mexa até engrossar. Tempere com sal e noz-moscada.",
+      "Em um refratário, alterne camadas de molho de carne, massa, presunto, muçarela e molho branco.",
+      "Termine com molho e parmesão. Cubra com papel-alumínio e asse a 200 °C por 30 minutos; descubra e deixe gratinar mais 10 minutos.",
+    ],
+  },
+  {
+    title: "Tutu de feijão",
+    minutes: 30, servings: 4, tags: ["acompanhamento", "salgado", "aproveitamento"],
+    ingredients: [i("feijão cozido", "3 xícaras com caldo"), i("farinha de mandioca", "1 xícara"), i("bacon", "100 g"), i("cebola", "1"), i("alho", "3 dentes"), i("óleo", "1 colher"), i("sal"), i("cheiro-verde", "a gosto", true), i("ovo cozido", "2", true)],
+    steps: [
+      "Bata o feijão com o caldo no liquidificador, ou amasse bem.",
+      "Frite o bacon no óleo e junte cebola e alho até dourar.",
+      "Acrescente o feijão batido e deixe ferver.",
+      "Adicione a farinha aos poucos, mexendo sem parar até engrossar. Acerte o sal e sirva com cheiro-verde e ovo cozido.",
+    ],
+  },
+  {
+    title: "Feijão preto com calabresa",
+    minutes: 60, servings: 6, tags: ["proteína", "salgado", "panela de pressão"],
+    ingredients: [i("feijão preto", "500 g"), i("linguiça calabresa", "2"), i("bacon", "100 g", true), i("cebola", "1"), i("alho", "4 dentes"), i("folha de louro", "2"), i("água", "2 litros"), i("óleo", "1 colher"), i("sal")],
+    steps: [
+      "Cozinhe o feijão com a água e o louro na pressão por 30 minutos após pegar pressão.",
+      "Em outra panela, frite o bacon e a calabresa em rodelas no óleo até dourar.",
+      "Junte a cebola e o alho e refogue até ficarem macios.",
+      "Despeje o feijão cozido no refogado, acerte o sal e deixe ferver em fogo baixo por 15 minutos para engrossar.",
+    ],
+  },
+  {
+    title: "Farofa de bacon com calabresa",
+    minutes: 20, servings: 6, tags: ["acompanhamento", "salgado", "rápido", "festa"],
+    ingredients: [i("farinha de mandioca", "2 xícaras"), i("bacon", "150 g"), i("linguiça calabresa", "1"), i("cebola", "1"), i("alho", "2 dentes"), i("manteiga", "2 colheres"), i("ovo", "2", true), i("sal"), i("cheiro-verde", "a gosto", true)],
+    steps: [
+      "Frite o bacon em cubos até soltar a gordura e junte a calabresa picada até dourar.",
+      "Acrescente a manteiga, a cebola e o alho e refogue.",
+      "Se quiser, quebre os ovos na panela e mexa até cozinharem.",
+      "Junte a farinha aos poucos, mexendo em fogo baixo até ficar sequinha e tostada. Acerte o sal e finalize com cheiro-verde.",
+    ],
+  },
+];

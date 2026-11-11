@@ -73,7 +73,10 @@ export function rankRecipes(recipes: Recipe[], pantry: FoodItem[], ref: string =
     .map((r) => matchRecipe(r, pantry, ref))
     .sort(
       (a, b) =>
+        // "não gostei" goes to the end; "gostei" comes first among equals
+        Number(a.recipe.rating === -1) - Number(b.recipe.rating === -1) ||
         Number(b.canMake) - Number(a.canMake) ||
+        Number(b.recipe.rating === 1) - Number(a.recipe.rating === 1) ||
         b.expiringUsed.length - a.expiringUsed.length ||
         b.score - a.score ||
         a.missing.length - b.missing.length ||

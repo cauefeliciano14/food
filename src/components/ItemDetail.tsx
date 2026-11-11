@@ -3,7 +3,7 @@ import { useBack } from "../lib/back";
 import type { FoodItem } from "../lib/types";
 import { categoryInfo, locationInfo } from "../lib/types";
 import { formatBR } from "../lib/dates";
-import { consumeItem, db, moveItem } from "../lib/db";
+import { consumeItem, db, moveItem, moveMessage } from "../lib/db";
 import { useLiveQuery } from "dexie-react-hooks";
 import { useToast } from "../lib/toast";
 import { LOCATIONS, type Location } from "../lib/types";
@@ -12,7 +12,7 @@ import { ItemBadge, fmtQty } from "./ItemRow";
 import { OpenItem } from "./OpenItem";
 import { freshnessNote } from "../lib/freshness";
 import { ItemForm } from "./ItemForm";
-import { Check, Info, PackageOpen, Pencil, ShoppingCart, Sparkles, Split, Trash2 } from "lucide-react";
+import { Check, Droplets, Info, PackageOpen, Pencil, ShoppingCart, Sparkles, Split, Trash2 } from "lucide-react";
 import { CategoryIcon, LocationIcon } from "./icons";
 
 export function ItemDetail({ item: initial, onDone }: { item: FoodItem; onDone: () => void }) {
@@ -51,6 +51,9 @@ export function ItemDetail({ item: initial, onDone }: { item: FoodItem; onDone: 
         {note && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Info size={14} style={{ marginTop: 3 }} /><span>{note}</span></div>}
         {item.fullName && item.fullName !== item.name && <div className="small"><span className="muted">Nome original: </span>{item.fullName}</div>}
         {item.notes && <div className="small">{item.notes}</div>}
+        {item.thawedAt && item.location !== "freezer" && (
+          <div className="notice small icon-label" role="status"><Droplets size={16} /><span>Descongelado em {formatBR(item.thawedAt)}: use até {formatBR(item.expiryDate)}. Não volte ao freezer cru.</span></div>
+        )}
         {item.tip && <div className="small icon-label" style={{ alignItems: "flex-start" }}><Sparkles size={14} style={{ marginTop: 3 }} aria-label="Dica da IA" /><span>{item.tip}</span></div>}
       </div>
 
@@ -62,10 +65,7 @@ export function ItemDetail({ item: initial, onDone }: { item: FoodItem; onDone: 
               onClick={async () => {
                 if (item.location === l.value) return;
                 const r = await moveItem(item, l.value as Location);
-                showToast(
-                  `${item.name} → ${l.label}${r.expiryDate !== item.expiryDate ? ` · validade ${r.expiryDate ? formatBR(r.expiryDate) : "sem data"}` : ""}`,
-                  r.undo,
-                );
+                showToast(moveMessage(item, l.value as Location, r), r.undo);
               }}><LocationIcon location={l.value} />{l.label}</button>
           ))}
         </div>

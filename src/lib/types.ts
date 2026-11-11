@@ -33,6 +33,8 @@ export interface FoodItem {
   /** price paid per 1 `unit` (R$), when known — used to value waste */
   unitPrice?: number;
   barcode?: string;
+  /** YYYY-MM-DD when it came out of the freezer (thawing: use soon, don't refreeze) */
+  thawedAt?: string;
   /** storage tip / why the date was adjusted (from "Organizar com IA") */
   tip?: string;
   /** when the AI last reviewed this item — the button only sends items not reviewed yet */
@@ -55,6 +57,8 @@ export interface Recipe {
   steps: string[];
   tags: string[];
   favorite?: boolean;
+  /** after cooking: 1 = gostei, -1 = não gostei (used to order suggestions) */
+  rating?: 1 | -1;
   /** photo of the finished dish (small JPEG data URL), added by the user */
   photo?: string;
   source: "padrao" | "minha" | "ia";

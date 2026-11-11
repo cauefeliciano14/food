@@ -10,7 +10,7 @@ import { addDays } from "../lib/dates";
 import { dayLabel } from "../lib/mealplan";
 import { ExpiryBadge, fmtQty } from "./ItemRow";
 import { RecipeForm } from "./RecipeForm";
-import { CalendarDays, Check, ChefHat, Clock, Minus, Pencil, ShoppingCart, Star, Users, X } from "lucide-react";
+import { CalendarDays, Check, ChefHat, Clock, Minus, Pencil, ShoppingCart, Star, ThumbsDown, ThumbsUp, Users, X } from "lucide-react";
 import { dishStyle } from "./icons";
 import { DishPhoto } from "./DishPhoto";
 
@@ -18,7 +18,7 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
   const recipe = useLiveQuery(() => db.recipes.get(initial.id!), [initial.id]) ?? initial;
   const items = useLiveQuery(() => db.items.toArray(), []) ?? [];
   const m = useMemo(() => matchRecipe(recipe, items, today()), [recipe, items]);
-  const [mode, setMode] = useState<"view" | "edit" | "cook">("view");
+  const [mode, setMode] = useState<"view" | "edit" | "cook" | "rate">("view");
   const [usedUp, setUsedUp] = useState<Set<number>>(new Set());
   const [addedToList, setAddedToList] = useState(false);
   const [planning, setPlanning] = useState(false);
@@ -32,6 +32,24 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
 
   const matchedItems: FoodItem[] = [];
   for (const ing of m.ingredients) for (const it of ing.items) if (!matchedItems.some((x) => x.id === it.id)) matchedItems.push(it);
+
+  if (mode === "rate") {
+    const rate = async (v?: 1 | -1) => {
+      if (v) await db.recipes.update(recipe.id!, { rating: v });
+      onDone();
+    };
+    return (
+      <div className="stack" style={{ textAlign: "center" }}>
+        <p style={{ fontSize: "1.15rem", fontWeight: 700, margin: "8px 0" }}>Como ficou?</p>
+        <p className="small muted" style={{ margin: 0 }}>As receitas que você gosta aparecem antes nas sugestões; as que não gostou vão para o fim.</p>
+        <div className="grid-2">
+          <button className="btn primary" style={{ minHeight: 56 }} onClick={() => rate(1)}><ThumbsUp size={20} />Gostei</button>
+          <button className="btn" style={{ minHeight: 56 }} onClick={() => rate(-1)}><ThumbsDown size={20} />Não gostei</button>
+        </div>
+        <button className="btn ghost block" onClick={() => rate()}>Pular</button>
+      </div>
+    );
+  }
 
   if (mode === "cook") {
     return (
@@ -53,7 +71,7 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
         </div>
         <button className="btn primary block" onClick={async () => {
           for (const it of matchedItems) if (usedUp.has(it.id!)) await consumeItem(it, it.quantity, "consumido");
-          onDone();
+          setMode("rate");
         }}>Concluir</button>
       </div>
     );
@@ -132,6 +150,12 @@ export function RecipeDetail({ recipe: initial, onDone, onOpenShopping }: { reci
       ) : (
         <button className="btn block" onClick={() => setPlanning(true)}>{planned ? <><Check size={18} />No cardápio: {planned}</> : <><CalendarDays size={18} />Planejar para um dia</>}</button>
       )}
+      <div className="grid-2" role="group" aria-label="Avaliação">
+        <button className={`btn ${recipe.rating === 1 ? "primary" : ""}`} aria-pressed={recipe.rating === 1}
+          onClick={() => db.recipes.update(recipe.id!, { rating: recipe.rating === 1 ? undefined : 1 })}><ThumbsUp size={18} />Gostei</button>
+        <button className={`btn ${recipe.rating === -1 ? "danger" : ""}`} aria-pressed={recipe.rating === -1}
+          onClick={() => db.recipes.update(recipe.id!, { rating: recipe.rating === -1 ? undefined : -1 })}><ThumbsDown size={18} />Não gostei</button>
+      </div>
       <div className="grid-2">
         <button className="btn" onClick={() => db.recipes.update(recipe.id!, { favorite: !recipe.favorite })}><Star size={18} fill={recipe.favorite ? "currentColor" : "none"} />{recipe.favorite ? "Favorita" : "Favoritar"}</button>
         <button className="btn" onClick={() => setMode("edit")}><Pencil size={18} />Editar</button>

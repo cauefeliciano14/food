@@ -97,7 +97,7 @@ export function Pantry({ initialFilter, openItem, onAdd, onOrganize }: { initial
 
         {hint && shown.length > 0 && (
           <div className="hint">
-            <span style={{ flex: 1 }}>Dica: deslize um item para a <b>direita</b> quando usar, ou para a <b>esquerda</b> se jogou fora.</span>
+            <span style={{ flex: 1 }}>Dica: deslize um item para a <b>direita</b> quando usar, ou para a <b>esquerda</b> para mandar ao freezer ou jogar fora.</span>
             <button className="icon-btn" onClick={dismissHint} aria-label="Fechar dica"><X size={18} /></button>
           </div>
         )}

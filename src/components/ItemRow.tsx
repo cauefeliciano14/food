@@ -1,9 +1,9 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Check, PackageOpen, Trash2 } from "lucide-react";
-import type { FoodItem } from "../lib/types";
+import { Check, Droplets, PackageOpen, Snowflake, Trash2 } from "lucide-react";
+import type { FoodItem, Location } from "../lib/types";
 import { locationInfo } from "../lib/types";
 import { daysBetween, expiryLabel, expiryStatus, today } from "../lib/dates";
-import { consumeItem, quickUseAmount } from "../lib/db";
+import { consumeItem, moveItem, moveMessage, quickUseAmount } from "../lib/db";
 import { useToast } from "../lib/toast";
 import { CategoryIcon, LocationIcon } from "./icons";
 import { effectiveDate, itemLabel, itemStatus } from "../lib/freshness";
@@ -45,6 +45,7 @@ export function ItemRow({ item, onClick, swipe = false }: { item: FoodItem; onCl
           <span>{fmtQty(item.quantity, item.unit)}</span>·<LocationIcon location={item.location} />
           <span>{locationInfo(item.location).label}</span>
           {item.openedAt && <><span>·</span><PackageOpen size={14} aria-label="Aberto" /></>}
+          {item.thawedAt && item.location !== "freezer" && <><span>·</span><Droplets size={14} aria-label="Descongelando" /></>}
         </div>
       </div>
       <ItemBadge item={item} />
@@ -55,42 +56,75 @@ export function ItemRow({ item, onClick, swipe = false }: { item: FoodItem; onCl
 }
 
 const THRESHOLD = 88;
+/** width of the two buttons revealed by a left swipe */
+const REVEAL = 200;
 
-/** Swipe right = used, swipe left = thrown away. Both can be undone from the toast. */
+/**
+ * Swipe right = used. Swipe left = reveals two buttons: move (to the freezer, or
+ * out of it to thaw in the fridge) and "joguei fora". Everything can be undone.
+ */
 function SwipeActions({ item, children }: { item: FoodItem; children: ReactNode }) {
   const notify = useToast();
   const [dx, setDx] = useState(0);
+  const [open, setOpen] = useState(false);
   const [snapping, setSnapping] = useState(false);
   const [gone, setGone] = useState(false);
-  const start = useRef<{ x: number; y: number; active: boolean } | null>(null);
+  const start = useRef<{ x: number; y: number; base: number; active: boolean } | null>(null);
   const moved = useRef(false);
   const wrap = useRef<HTMLDivElement>(null);
+  const moveTo: Location = item.location === "freezer" ? "geladeira" : "freezer";
 
-  async function commit(dir: "right" | "left") {
+  const close = () => { setSnapping(true); setDx(0); setOpen(false); };
+
+  async function collapseThen(fn: () => Promise<void>, removes: boolean, dir: number) {
     const el = wrap.current;
     setSnapping(true);
-    setDx(dir === "right" ? window.innerWidth : -window.innerWidth);
-    const amount = dir === "right" ? quickUseAmount(item) : item.quantity;
-    const removes = amount >= item.quantity;
+    setDx(dir * window.innerWidth);
     if (removes && el) {
       // collapse the row so the list closes the gap smoothly
       el.style.height = `${el.offsetHeight}px`;
       requestAnimationFrame(() => { setGone(true); el.style.height = "0px"; el.style.marginBottom = "-8px"; });
     }
     await new Promise((r) => setTimeout(r, removes ? 220 : 160));
-    const undo = await consumeItem(item, amount, dir === "right" ? "consumido" : "descartado");
-    if (!removes) { setDx(0); }
-    notify(
-      dir === "left" ? `${item.name}: jogado fora` : removes ? `${item.name}: usado` : `${item.name}: usou 1 (restam ${fmtQty(item.quantity - 1, item.unit)})`,
-      undo,
-    );
+    await fn();
+    if (!removes) { setDx(0); setOpen(false); }
+  }
+
+  function used() {
+    const amount = quickUseAmount(item);
+    const removes = amount >= item.quantity;
+    void collapseThen(async () => {
+      const undo = await consumeItem(item, amount, "consumido");
+      notify(removes ? `${item.name}: usado` : `${item.name}: usou 1 (restam ${fmtQty(item.quantity - 1, item.unit)})`, undo);
+    }, removes, 1);
+  }
+
+  function thrown() {
+    void collapseThen(async () => {
+      const undo = await consumeItem(item, item.quantity, "descartado");
+      notify(`${item.name}: jogado fora`, undo);
+    }, true, -1);
+  }
+
+  async function move() {
+    close();
+    const r = await moveItem(item, moveTo);
+    notify(moveMessage(item, moveTo, r), r.undo);
   }
 
   return (
     <div className={`swipe ${gone ? "gone" : ""}`} ref={wrap}>
-      {dx !== 0 && (
-        <div className={`swipe-bg ${dx > 0 ? "right" : "left"} ${Math.abs(dx) >= THRESHOLD ? "armed" : ""}`} aria-hidden="true">
-          <span>{dx > 0 ? <><Check size={20} /> Usei</> : <>Joguei fora <Trash2 size={20} /></>}</span>
+      {dx > 0 && (
+        <div className={`swipe-bg right ${dx >= THRESHOLD ? "armed" : ""}`} aria-hidden="true">
+          <span><Check size={20} /> Usei</span>
+        </div>
+      )}
+      {dx < 0 && (
+        <div className="swipe-actions">
+          <button className="swipe-act move" onClick={move} tabIndex={open ? 0 : -1}>
+            {moveTo === "freezer" ? <><Snowflake size={20} />Freezer</> : <><Droplets size={20} />Descongelar</>}
+          </button>
+          <button className="swipe-act trash" onClick={thrown} tabIndex={open ? 0 : -1}><Trash2 size={20} />Jogar fora</button>
         </div>
       )}
       <div
@@ -98,7 +132,7 @@ function SwipeActions({ item, children }: { item: FoodItem; children: ReactNode 
         style={{ transform: dx ? `translateX(${dx}px)` : undefined }}
         onPointerDown={(e) => {
           if (e.pointerType === "mouse" && e.button !== 0) return;
-          start.current = { x: e.clientX, y: e.clientY, active: false };
+          start.current = { x: e.clientX, y: e.clientY, base: open ? -REVEAL : 0, active: false };
           moved.current = false;
           setSnapping(false);
         }}
@@ -113,20 +147,22 @@ function SwipeActions({ item, children }: { item: FoodItem; children: ReactNode 
             moved.current = true;
             e.currentTarget.setPointerCapture(e.pointerId);
           }
-          setDx(mx);
+          setDx(Math.max(-REVEAL - 40, s.base + mx));
         }}
         onPointerUp={() => {
           const s = start.current;
           start.current = null;
           if (!s?.active) return;
-          if (dx >= THRESHOLD) void commit("right");
-          else if (dx <= -THRESHOLD) void commit("left");
-          else { setSnapping(true); setDx(0); }
+          setSnapping(true);
+          if (dx >= THRESHOLD && !open) used();
+          else if (dx <= -THRESHOLD) { setDx(-REVEAL); setOpen(true); }
+          else close();
         }}
-        onPointerCancel={() => { start.current = null; setSnapping(true); setDx(0); }}
+        onPointerCancel={() => { start.current = null; close(); }}
         onClickCapture={(e) => {
-          // a swipe must not also open the item
-          if (moved.current) { e.stopPropagation(); e.preventDefault(); moved.current = false; }
+          // a swipe (or a tap on an opened row) must not also open the item
+          if (moved.current) { e.stopPropagation(); e.preventDefault(); moved.current = false; return; }
+          if (open) { e.stopPropagation(); e.preventDefault(); close(); }
         }}
       >
         {children}

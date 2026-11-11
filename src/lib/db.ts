@@ -189,14 +189,19 @@ const FREEZABLE = new Set(["carnes", "peixes", "hortifruti", "padaria", "laticin
  * - out of the freezer (thawing): it must be used soon (never extends the date).
  * Returns the new expiry and a function that undoes the move.
  */
-export async function moveItem(item: FoodItem, to: Location, ref = today()): Promise<{ expiryDate: string; undo: () => Promise<void> }> {
+export async function moveItem(item: FoodItem, to: Location, ref = today()): Promise<{ expiryDate: string; thawing: boolean; undo: () => Promise<void> }> {
   const from = item.location;
   let expiryDate = item.expiryDate;
+  let thawedAt = item.thawedAt;
+  let thawing = false;
   if (to !== from && FREEZABLE.has(item.category)) {
     if (to === "freezer") {
       const frozen = addDays(ref, suggestShelfLifeDays(item.name, item.category, "freezer"));
       if (!expiryDate || frozen > expiryDate) expiryDate = frozen;
+      thawedAt = undefined;
     } else if (from === "freezer") {
+      thawing = true;
+      thawedAt = ref;
       const thawDays = to === "geladeira"
         ? item.category === "carnes" || item.category === "peixes" ? 2 : suggestShelfLifeDays(item.name, item.category, "geladeira")
         : 1;
@@ -204,7 +209,19 @@ export async function moveItem(item: FoodItem, to: Location, ref = today()): Pro
       if (!expiryDate || thawed < expiryDate) expiryDate = thawed;
     }
   }
-  const before = { location: from, expiryDate: item.expiryDate };
-  await db.items.update(item.id!, { location: to, expiryDate });
-  return { expiryDate, undo: async () => { await db.items.update(item.id!, before); } };
+  const before = { location: from, expiryDate: item.expiryDate, thawedAt: item.thawedAt };
+  await db.items.update(item.id!, { location: to, expiryDate, thawedAt });
+  return { expiryDate, thawing, undo: async () => { await db.items.update(item.id!, before); } };
+}
+
+/** Toast text for a move ("Carne → Freezer · validade 11/03/2027", or the thawing warning). */
+export function moveMessage(item: FoodItem, to: Location, r: { expiryDate: string; thawing: boolean }): string {
+  const label = { geladeira: "Geladeira", freezer: "Freezer", despensa: "Despensa", armario: "Armário" }[to];
+  if (r.thawing) return `${item.name} descongelando: use até ${fmtDate(r.expiryDate)} e não volte ao freezer`;
+  return `${item.name} → ${label}${r.expiryDate !== item.expiryDate ? ` · validade ${r.expiryDate ? fmtDate(r.expiryDate) : "sem data"}` : ""}`;
+}
+
+function fmtDate(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return `${d}/${m}/${y}`;
 }

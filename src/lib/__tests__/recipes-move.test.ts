@@ -51,3 +51,26 @@ describe("moving an item between places", () => {
     expect(r.expiryDate).toBe("2027-08-01");
   });
 });
+
+describe("ratings order the suggestions", () => {
+  it("liked first, disliked last", async () => {
+    const { rankRecipes } = await import("../matching");
+    const r = (title: string, rating?: 1 | -1) => rec(title, [], 10, { ingredients: [{ name: "sal" }], rating });
+    const out = rankRecipes([r("B"), r("A", -1), r("C", 1)], [], "2026-11-11").map((m) => m.recipe.title);
+    expect(out).toEqual(["C", "B", "A"]);
+  });
+});
+
+describe("thawing", () => {
+  it("marks the item and warns", async () => {
+    const { db, moveItem, moveMessage } = await import("../db");
+    const id = await db.items.add({ name: "Frango", quantity: 1, unit: "kg", category: "carnes", location: "freezer", purchaseDate: "2026-11-01", expiryDate: "2027-02-01", createdAt: 1 });
+    const it = (await db.items.get(id))!;
+    const r = await moveItem(it, "geladeira", "2026-11-11");
+    expect(r.thawing).toBe(true);
+    expect((await db.items.get(id))!.thawedAt).toBe("2026-11-11");
+    expect(moveMessage(it, "geladeira", r)).toBe("Frango descongelando: use até 13/11/2026 e não volte ao freezer");
+    await moveItem((await db.items.get(id))!, "freezer", "2026-11-12");
+    expect((await db.items.get(id))!.thawedAt).toBeUndefined();
+  });
+});

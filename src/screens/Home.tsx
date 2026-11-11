@@ -35,7 +35,7 @@ export function Home({ go, openItem, openRecipe, openSettings, openWaste }: {
     .sort((a, b) => effectiveDate(a).localeCompare(effectiveDate(b)));
 
   const suggestions = useMemo(
-    () => rankRecipes(recipes, items, ref).filter((m) => m.canMake || m.missing.length <= 1).slice(0, 6),
+    () => rankRecipes(recipes, items, ref).filter((m) => m.recipe.rating !== -1 && (m.canMake || m.missing.length <= 1)).slice(0, 6),
     [recipes, items, ref],
   );
 
